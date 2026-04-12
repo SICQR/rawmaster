@@ -19,49 +19,75 @@ echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Create venv if it doesn't exist
+# ── Create venv ────────────────────────────────────────────────────────────────
 if [ ! -d "$SCRIPT_DIR/.venv" ]; then
     echo "  Creating virtual environment..."
     python3 -m venv "$SCRIPT_DIR/.venv"
 fi
 
-# Activate venv
-source "$SCRIPT_DIR/.venv/bin/activate"
+PIP="$SCRIPT_DIR/.venv/bin/pip"
 
-echo "  Installing Python dependencies (this may take a few minutes)..."
-pip install --upgrade pip --quiet
-pip install -r "$SCRIPT_DIR/requirements.txt"
+echo "  Upgrading pip..."
+"$PIP" install --upgrade pip --quiet
+
+echo "  Installing core dependencies..."
+"$PIP" install -r "$SCRIPT_DIR/requirements.txt" --quiet
+
+# ── basic-pitch: must be installed with --no-deps on Python 3.14 / Apple Silicon
+echo "  Installing basic-pitch (no-deps workaround for Python 3.14)..."
+"$PIP" install basic-pitch --no-deps --quiet
+"$PIP" install mir-eval pretty-midi resampy onnxruntime --quiet
 
 chmod +x "$SCRIPT_DIR/rawmaster.py"
 
-# Write /usr/local/bin/rawmaster
+# ── Detect developer / self-build mode ────────────────────────────────────────
+DEV_MODE=0
+if [ -d "$SCRIPT_DIR/.git" ]; then
+    DEV_MODE=1
+    echo "  Git repo detected — enabling developer mode (license bypass)."
+fi
+
+# ── Write /usr/local/bin/rawmaster ────────────────────────────────────────────
 echo "  Writing launcher to /usr/local/bin/rawmaster..."
-RAWMASTER_LAUNCHER=$(cat <<LAUNCH
+
+if [ "$DEV_MODE" -eq 1 ]; then
+    SKIP_LINE='export RAWMASTER_SKIP_LICENSE=1'
+else
+    SKIP_LINE='export RAWMASTER_SKIP_LICENSE="${RAWMASTER_SKIP_LICENSE}"'
+fi
+
+sudo tee /usr/local/bin/rawmaster > /dev/null << LAUNCHEREOF
 #!/bin/bash
+$SKIP_LINE
 source "$SCRIPT_DIR/.venv/bin/activate"
 exec python3 "$SCRIPT_DIR/rawmaster.py" "\$@"
-LAUNCH
-)
-echo "$RAWMASTER_LAUNCHER" | sudo tee /usr/local/bin/rawmaster > /dev/null
+LAUNCHEREOF
 sudo chmod +x /usr/local/bin/rawmaster
 
-# Write /usr/local/bin/rawmaster-ui
+# ── Write /usr/local/bin/rawmaster-ui ─────────────────────────────────────────
 echo "  Writing launcher to /usr/local/bin/rawmaster-ui..."
-RAWMASTER_UI_LAUNCHER=$(cat <<LAUNCH
+
+sudo tee /usr/local/bin/rawmaster-ui > /dev/null << LAUNCHEREOF
 #!/bin/bash
+$SKIP_LINE
 source "$SCRIPT_DIR/.venv/bin/activate"
 exec python3 "$SCRIPT_DIR/app.py" "\$@"
-LAUNCH
-)
-echo "$RAWMASTER_UI_LAUNCHER" | sudo tee /usr/local/bin/rawmaster-ui > /dev/null
+LAUNCHEREOF
 sudo chmod +x /usr/local/bin/rawmaster-ui
 
+# ── Smoke test ─────────────────────────────────────────────────────────────────
 echo ""
 echo "  Testing installation..."
-rawmaster --help
+/usr/local/bin/rawmaster --help
 
 echo ""
 echo "Done! RAWMASTER installed."
+echo ""
+if [ "$DEV_MODE" -eq 1 ]; then
+    echo "   Developer mode: license check bypassed automatically."
+else
+    echo "   If you built this yourself, add RAWMASTER_SKIP_LICENSE=1 to your shell env."
+fi
 echo ""
 echo "   CLI:  rawmaster track.mp3 --stems --midi"
 echo "   UI:   rawmaster-ui  (opens at http://localhost:7860)"

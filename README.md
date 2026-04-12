@@ -14,6 +14,15 @@ Stem separation, remaster, MIDI extraction, and BPM/key detection Ñ all local, n
 
 ---
 
+> **macOS / Python 3.14 install**
+> If you get an `externally-managed-environment` error, run:
+> ```bash
+> bash install.sh   # handles venv + basic-pitch workaround automatically
+> ```
+> If you built this yourself, add `RAWMASTER_SKIP_LICENSE=1` to your shell env
+> (or just run `bash install.sh` -- it detects the git repo and does this for you).
+
+
 ## What it does
 
 | Output | Details |

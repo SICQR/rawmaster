@@ -55,8 +55,8 @@ def validate_license(key: str) -> bool:
 
 
 def check_license():
-    # CI / dev bypass — set RAWMASTER_SKIP_LICENSE=1 to skip entirely
-    if os.environ.get("RAWMASTER_SKIP_LICENSE") == "1":
+    # CI / dev bypass — set RAWMASTER_SKIP_LICENSE=1 (or any non-empty value) to skip
+    if os.environ.get("RAWMASTER_SKIP_LICENSE"):
         return
 
     license_dir = Path(os.environ.get("RAWMASTER_LICENSE_DIR", str(Path.home() / ".rawmaster")))
