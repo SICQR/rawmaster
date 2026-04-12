@@ -272,7 +272,7 @@ def process_file(
 ):
     if not audio_path.exists():
         print(f"  ❌ File not found: {audio_path}")
-        return
+        sys.exit(1)
 
     if audio_path.suffix.lower() not in SUPPORTED_FORMATS:
         print(f"  ⚠️  Skipping unsupported format: {audio_path.name}")
