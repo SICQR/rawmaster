@@ -14,6 +14,18 @@ Stem separation, remaster, MIDI extraction, and BPM/key detection � all local,
 
 ---
 
+## Install
+bash install.sh
+
+## Python 3.14 / macOS note
+If you see "externally-managed-environment" — the install script handles this automatically via venv. Do not use --break-system-packages.
+
+## Developer mode
+Add RAWMASTER_SKIP_LICENSE=1 to your shell env to skip license checks:
+echo 'export RAWMASTER_SKIP_LICENSE=1' >> ~/.zshrc && source ~/.zshrc
+
+---
+
 > **macOS / Python 3.14 install**
 > If you get an `externally-managed-environment` error, run:
 > ```bash
