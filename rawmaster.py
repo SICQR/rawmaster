@@ -63,7 +63,6 @@ def check_license():
     license_file = license_dir / "license"
 
     if license_file.exists():
-        cached = license_file.read_text().strip()
         mtime = license_file.stat().st_mtime
         if (time.time() - mtime) < 30 * 86400:
             return  # valid, skip re-check
@@ -151,7 +150,7 @@ def remaster(audio_path: Path, output_dir: Path) -> Path:
 def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -> dict:
     if not audio_path.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
-    print(f"  🥁 Separating stems (htdemucs_ft)…")
+    print("  🥁 Separating stems (htdemucs_ft)…")
     warn_if_first_run()
 
     model = "htdemucs_6s" if six_stem else "htdemucs_ft"
@@ -228,7 +227,7 @@ def extract_midi(stem_paths: dict, output_dir: Path, midi_all: bool = False):
 # ─────────────────────────────────────────────
 
 def detect_info(audio_path: Path, output_dir: Path) -> dict:
-    print(f"  🔍 Detecting BPM and key…")
+    print("  🔍 Detecting BPM and key…")
     output_dir.mkdir(parents=True, exist_ok=True)
     y, sr = librosa.load(str(audio_path), sr=None, mono=True)
 

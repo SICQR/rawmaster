@@ -31,7 +31,7 @@ jobs:
         run: |
           flake8 rawmaster.py app.py companion/daemon.py \
             --max-line-length=120 \
-            --ignore=E501,W503,E402,F401 \
+            --ignore=E501,W503,E402,F401,E226 \
             --count
 
   # ── Fast tests — no ML model download ───────────────────────────────────
