@@ -43,16 +43,19 @@ def test_mp3_path(tmp_path_factory, test_audio_path):
     """MP3 version of test audio for realistic Suno-like input."""
     tmp = tmp_path_factory.mktemp("mp3")
     mp3 = tmp / "test_track.mp3"
-    result = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(test_audio_path), "-b:a", "128k", str(mp3)],
-        capture_output=True,
-    )
-    if result.returncode != 0:
-        # ffmpeg not available — return WAV as fallback
-        wav = tmp / "test_track.wav"
-        shutil.copy(str(test_audio_path), str(wav))
-        return wav
-    return mp3
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(test_audio_path), "-b:a", "128k", str(mp3)],
+            capture_output=True,
+        )
+        if result.returncode == 0:
+            return mp3
+    except FileNotFoundError:
+        pass
+    # ffmpeg not available — return WAV as fallback
+    wav = tmp / "test_track.wav"
+    shutil.copy(str(test_audio_path), str(wav))
+    return wav
 
 
 # ─── detect_info ──────────────────────────────────────────────────────────────
