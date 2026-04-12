@@ -37,11 +37,18 @@ else
     echo "  Added rawmaster alias to $RC"
 fi
 
+if grep -q "alias rawmaster-ui=" "$RC" 2>/dev/null; then
+    sed -i.bak "s|alias rawmaster-ui=.*|alias rawmaster-ui='python3 ${SCRIPT_DIR}/app.py'|" "$RC"
+else
+    echo "alias rawmaster-ui='python3 ${SCRIPT_DIR}/app.py'" >> "$RC"
+fi
+
 echo ""
 echo "Done! RAWMASTER installed."
 echo ""
 echo "   Restart your terminal or run:  source $RC"
-echo "   Then use:  rawmaster track.mp3 --stems --midi"
+echo "   CLI:  rawmaster track.mp3 --stems --midi"
+echo "   UI:   rawmaster-ui  (opens at http://localhost:7860)"
 echo ""
 echo "   First run downloads AI models (~110MB). One time only."
 echo ""
