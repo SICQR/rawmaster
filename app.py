@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAWMASTER Ñ Gradio UI
+RAWMASTER Ã‘ Gradio UI
 Smash Daddys Audio Tools | Strip it back. Own the stems.
 Run: python3 app.py  ->  http://localhost:7860
 """
@@ -118,7 +118,7 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
 
     gr.Markdown("""
 # RAWMASTER
-**Smash Daddys Audio Tools Ñ Strip it back. Own the stems.**
+**Smash Daddys Audio Tools Ã‘ Strip it back. Own the stems.**
 """)
 
     with gr.Row():

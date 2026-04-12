@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAWMASTER � Smash Daddys Audio Tools
+RAWMASTER — Smash Daddys Audio Tools
 Strip it back. Own the stems.
 """
 
@@ -22,24 +22,25 @@ import requests
 __version__ = "1.0.0"
 
 BANNER = r"""
-???????  ?????? ???    ???????   ???? ?????? ????????????????????????????????
-???????????????????    ???????? ??????????????????????????????????????????????
-??????????????????? ?? ??????????????????????????????   ???   ??????  ????????
-?????????????????????????????????????????????????????   ???   ??????  ????????
-???  ??????  ???????????????? ??? ??????  ???????????   ???   ???????????  ???
-???  ??????  ??? ???????? ???     ??????  ???????????   ???   ???????????  ???
+██████╗  █████╗ ██╗    ██╗███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗
+██╔══██╗██╔══██╗██║    ██║████╗ ████║██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
+██████╔╝███████║██║ █╗ ██║██╔████╔██║███████║███████╗   ██║   █████╗  ██████╔╝
+██╔══██╗██╔══██║██║███╗██║██║╚██╔╝██║██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗
+██║  ██║██║  ██║╚███╔███╔╝██║ ╚═╝ ██║██║  ██║███████║   ██║   ███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
            Smash Daddys Audio Tools  |  Strip it back. Own the stems.
 """
 
 SUPPORTED_FORMATS = {".mp3", ".wav", ".flac", ".aiff", ".aif", ".ogg", ".m4a"}
 
 GUMROAD_PRODUCT_ID = "PLACEHOLDER_REPLACE_WITH_REAL_ID"
-# Phil: replace with real product_id from Gumroad dashboard Settings > Integrations
+# Phil: replace with the real product_id from your Gumroad dashboard
+# (found in Settings > Integrations for the RAWMASTER listing)
 
 
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 #  LICENSE
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 
 def validate_license(key: str) -> bool:
     resp = requests.post(
@@ -56,87 +57,103 @@ def validate_license(key: str) -> bool:
 
 
 def check_license():
-    license_dir = Path.home() / ".rawmaster"
+    # CI / dev bypass — set RAWMASTER_SKIP_LICENSE=1 to skip entirely
+    if os.environ.get("RAWMASTER_SKIP_LICENSE") == "1":
+        return
+
+    license_dir = Path(os.environ.get("RAWMASTER_LICENSE_DIR", str(Path.home() / ".rawmaster")))
     license_file = license_dir / "license"
 
     if license_file.exists():
+        cached = license_file.read_text().strip()
         mtime = license_file.stat().st_mtime
         if (time.time() - mtime) < 30 * 86400:
-            return  # still valid, skip re-check
+            return  # valid, skip re-check
 
-    print("\n? Enter your RAWMASTER license key (from your Gumroad receipt):")
+    print("\n🔑 Enter your RAWMASTER license key (from your Gumroad receipt):")
     key = input("  Key: ").strip()
 
     try:
         if validate_license(key):
             license_dir.mkdir(exist_ok=True)
             license_file.write_text(key)
-            print("  ? License validated\n")
+            print("  ✅ License validated\n")
         else:
-            print("  ? Invalid license key. Buy at scanme2.gumroad.com")
+            print("  ❌ Invalid license key. Buy at scanme2.gumroad.com")
             sys.exit(1)
     except Exception:
         if license_file.exists():
-            print("  ??  Offline � using cached license\n")
+            print("  ⚠️  Offline — using cached license\n")
         else:
-            print("  ? Cannot validate license � check your internet connection")
+            print("  ❌ Cannot validate license — check your internet connection")
             sys.exit(1)
 
 
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 #  MODEL DOWNLOAD WARNING
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 
 def warn_if_first_run():
+    """Warn once if Demucs models haven't been downloaded yet."""
     checkpoint_dir = Path.home() / ".cache" / "torch" / "hub" / "checkpoints"
     model_files = list(checkpoint_dir.glob("htdemucs*")) if checkpoint_dir.exists() else []
     if not model_files:
-        print("  ? Downloading AI models on first run (~110MB). This happens once only...")
+        print("  📥 Downloading AI models on first run (~110MB). This happens once only...")
 
 
-# ?????????????????????????????????????????????
-#  STEP 1 � REMASTER
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
+#  STEP 1 — REMASTER
+# ─────────────────────────────────────────────
 
 def remaster(audio_path: Path, output_dir: Path) -> Path:
-    print(f"  ?  Remastering {audio_path.name}�")
+    print(f"  🎛  Remastering {audio_path.name}…")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Load & resample to 44100 Hz, float32
     audio, sr = librosa.load(str(audio_path), sr=44100, mono=False, dtype=np.float32)
 
+    # Ensure 2D: (channels, samples)
     if audio.ndim == 1:
         audio = np.expand_dims(audio, axis=0)
 
+    # Spectral gating (noisereduce) per channel
     denoised = np.stack([
         nr.reduce_noise(y=ch, sr=sr, stationary=False, prop_decrease=0.6)
         for ch in audio
     ])
 
+    # LUFS normalise to -14.0 (streaming standard)
     meter = pyln.Meter(sr)
+    # pyloudnorm expects (samples, channels) — transpose
     audio_for_lufs = denoised.T
     loudness = meter.integrated_loudness(audio_for_lufs)
     target_lufs = -14.0
     if np.isfinite(loudness):
         gain = pyln.normalize.loudness(audio_for_lufs, loudness, target_lufs)
-        normalised = gain.T
+        normalised = gain.T  # back to (channels, samples)
     else:
         normalised = denoised
 
+    # Hard limiter at -0.3 dBFS
     peak = 10 ** (-0.3 / 20)
     limited = np.clip(normalised, -peak, peak)
 
+    # Write 24-bit WAV (soundfile expects (samples, channels))
     out_name = audio_path.stem + "_RAWMASTER.wav"
     out_path = output_dir / out_name
     sf.write(str(out_path), limited.T, sr, subtype="PCM_24")
-    print(f"  ? Remaster saved ? {out_path.name}")
+    print(f"  ✅ Remaster saved → {out_path.name}")
     return out_path
 
 
-# ?????????????????????????????????????????????
-#  STEP 2 � STEM SEPARATION
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
+#  STEP 2 — STEM SEPARATION
+# ─────────────────────────────────────────────
 
 def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -> dict:
-    print(f"  ? Separating stems (htdemucs_ft)�")
+    if not audio_path.exists():
+        raise FileNotFoundError(f"Audio file not found: {audio_path}")
+    print(f"  🥁 Separating stems (htdemucs_ft)…")
     warn_if_first_run()
 
     model = "htdemucs_6s" if six_stem else "htdemucs_ft"
@@ -146,7 +163,7 @@ def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -
     cmd = [
         sys.executable, "-m", "demucs",
         "-n", model,
-        "--shifts", "2",
+        "--shifts", os.environ.get("RAWMASTER_TEST_SHIFTS", "2"),
         "--overlap", "0.25",
         "--float32",
         "--clip-mode", "rescale",
@@ -155,6 +172,7 @@ def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -
     ]
     subprocess.run(cmd, check=True)
 
+    # Demucs output: _demucs_tmp/{model}/{trackname}/{stem}.wav
     track_name = audio_path.stem
     demucs_track_dir = output_dir / "_demucs_tmp" / model / track_name
 
@@ -163,15 +181,17 @@ def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -
         dest = stems_out / stem_file.name
         shutil.move(str(stem_file), str(dest))
         stem_paths[stem_file.stem] = dest
-        print(f"  ? Stem saved ? stems/{stem_file.name}")
+        print(f"  ✅ Stem saved → stems/{stem_file.name}")
 
+    # Clean up Demucs temp dir
     shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
+
     return stem_paths
 
 
-# ?????????????????????????????????????????????
-#  STEP 3 � MIDI EXTRACTION
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
+#  STEP 3 — MIDI EXTRACTION
+# ─────────────────────────────────────────────
 
 def extract_midi(stem_paths: dict, output_dir: Path, midi_all: bool = False):
     from basic_pitch.inference import predict
@@ -183,36 +203,42 @@ def extract_midi(stem_paths: dict, output_dir: Path, midi_all: bool = False):
     targets = ["bass"]
     if midi_all and "vocals" in stem_paths:
         targets.append("vocals")
+    # Never extract from "other" — too noisy
 
     for stem_name in targets:
         if stem_name not in stem_paths:
-            print(f"  ??  Stem '{stem_name}' not found, skipping MIDI extraction")
+            print(f"  ⚠️  Stem '{stem_name}' not found, skipping MIDI extraction")
             continue
 
         stem_path = stem_paths[stem_name]
-        print(f"  ? Extracting MIDI from {stem_name}�")
+        print(f"  🎹 Extracting MIDI from {stem_name}…")
         warn_if_first_run()
 
+        from pathlib import Path as _BPPath
+        _onnx = str(_BPPath(ICASSP_2022_MODEL_PATH).parent / 'nmp.onnx')
         model_output, midi_data, note_activations = predict(
             str(stem_path),
-            ICASSP_2022_MODEL_PATH,
+            _onnx,
         )
         out_mid = midi_out / (stem_path.stem + ".mid")
         midi_data.write(str(out_mid))
-        print(f"  ? MIDI saved ? midi/{out_mid.name}")
+        print(f"  ✅ MIDI saved → midi/{out_mid.name}")
 
 
-# ?????????????????????????????????????????????
-#  STEP 4 � BPM + KEY
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
+#  STEP 4 — BPM + KEY
+# ─────────────────────────────────────────────
 
 def detect_info(audio_path: Path, output_dir: Path) -> dict:
-    print(f"  ? Detecting BPM and key�")
+    print(f"  🔍 Detecting BPM and key…")
+    output_dir.mkdir(parents=True, exist_ok=True)
     y, sr = librosa.load(str(audio_path), sr=None, mono=True)
 
+    # BPM
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     bpm = float(tempo[0]) if hasattr(tempo, "__len__") else float(tempo)
 
+    # Key via chroma correlation
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     chroma_mean = chroma.mean(axis=1)
     keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -231,13 +257,13 @@ def detect_info(audio_path: Path, output_dir: Path) -> dict:
         f"BPM:  {info['bpm']}\n"
         f"Key:  {info['key']} {info['mode']}\n"
     )
-    print(f"  ? BPM: {info['bpm']}  Key: {info['key']} {info['mode']}")
+    print(f"  ✅ BPM: {info['bpm']}  Key: {info['key']} {info['mode']}")
     return info
 
 
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 #  PROCESS SINGLE FILE
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 
 def process_file(
     audio_path: Path,
@@ -248,24 +274,28 @@ def process_file(
     six_stem: bool = False,
 ):
     if not audio_path.exists():
-        print(f"  ? File not found: {audio_path}")
+        print(f"  ❌ File not found: {audio_path}")
         return
 
     if audio_path.suffix.lower() not in SUPPORTED_FORMATS:
-        print(f"  ??  Skipping unsupported format: {audio_path.name}")
+        print(f"  ⚠️  Skipping unsupported format: {audio_path.name}")
         return
 
+    # Output dir at same level as input
     output_root = audio_path.parent / "rawmaster_output" / audio_path.stem
     output_root.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n{'?'*60}")
-    print(f"  ? Output ? {output_root}")
+    print(f"\n{'─'*60}")
+    print(f"  📁 Output → {output_root}")
 
     if do_info and not do_stems and not do_midi and not do_midi_all:
         detect_info(audio_path, output_root)
         return
 
+    # Always remaster (unless info-only)
     remaster(audio_path, output_root)
+
+    # BPM + key always written alongside remaster
     detect_info(audio_path, output_root)
 
     stem_paths = {}
@@ -275,19 +305,19 @@ def process_file(
     if do_midi or do_midi_all:
         extract_midi(stem_paths, output_root, midi_all=do_midi_all)
 
-    print(f"\n  ? Done ? {output_root}\n")
+    print(f"\n  🎉 Done → {output_root}\n")
 
 
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 #  MAIN
-# ?????????????????????????????????????????????
+# ─────────────────────────────────────────────
 
 def main():
     print(BANNER)
 
     parser = argparse.ArgumentParser(
         prog="rawmaster",
-        description="Smash Daddys Audio Tools � stem separation, remaster, MIDI, BPM/key",
+        description="Smash Daddys Audio Tools — stem separation, remaster, MIDI, BPM/key",
     )
     parser.add_argument("input", nargs="?", help="Audio file or folder path")
     parser.add_argument("--stems", nargs="?", const=4, type=int,
@@ -306,25 +336,30 @@ def main():
         parser.print_help()
         sys.exit(0)
 
+    # License check
     check_license()
 
     input_path = Path(args.input)
     six_stem = (args.stems == 6) if args.stems is not None else False
     do_stems = args.stems is not None
+    do_midi = args.midi
+    do_midi_all = args.midi_all
+    do_info = args.info
 
+    # Batch mode (folder)
     if input_path.is_dir():
         audio_files = [
             f for f in sorted(input_path.iterdir())
             if f.suffix.lower() in SUPPORTED_FORMATS
         ]
         if not audio_files:
-            print(f"  ? No supported audio files found in {input_path}")
+            print(f"  ❌ No supported audio files found in {input_path}")
             sys.exit(1)
-        print(f"  ? Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
+        print(f"  📂 Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
         for f in audio_files:
-            process_file(f, do_stems, args.midi, args.midi_all, args.info, six_stem)
+            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem)
     else:
-        process_file(input_path, do_stems, args.midi, args.midi_all, args.info, six_stem)
+        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem)
 
 
 if __name__ == "__main__":
