@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — RAWMASTER for Suno</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      max-width: 680px;
+      margin: 60px auto;
+      padding: 0 24px;
+      color: #1a1a1a;
+      line-height: 1.8;
+      font-size: 14px;
+    }
+    h1 { font-size: 22px; margin-bottom: 8px; }
+    h2 { font-size: 15px; margin-top: 32px; margin-bottom: 8px; color: #333; }
+    p  { margin-bottom: 14px; }
+    .updated { color: #888; font-size: 12px; margin-bottom: 32px; }
+    a  { color: #e63012; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: April 2026</p>
+
+  <h2>RAWMASTER for Suno (Chrome Extension)</h2>
+
+  <p><strong>RAWMASTER for Suno does not collect, transmit, or store any personal data.</strong></p>
+
+  <h2>What this extension does</h2>
+  <p>
+    RAWMASTER for Suno injects a button into suno.com track cards. When clicked, the extension
+    sends the audio URL of the selected track to the RAWMASTER Companion app running locally
+    on your machine at <code>http://127.0.0.1:5432</code>. The Companion processes the audio
+    entirely on your device and returns a ZIP file, which is downloaded directly to your computer.
+  </p>
+
+  <h2>Data we do NOT collect</h2>
+  <p>
+    This extension does not collect, log, transmit, or share:<br>
+    — Your browsing history<br>
+    — Your Suno account information<br>
+    — Your audio files<br>
+    — Any personally identifiable information
+  </p>
+
+  <h2>Local storage</h2>
+  <p>
+    The extension stores only your processing preferences (stem count, MIDI toggle) in Chrome's
+    local storage on your device. This data never leaves your machine.
+  </p>
+
+  <h2>Network requests</h2>
+  <p>
+    The only network requests made by this extension are:<br>
+    1. To <code>http://127.0.0.1:5432</code> (your local machine) — to communicate with the Companion daemon<br>
+    2. To <code>https://*.suno.ai</code> — to resolve audio file URLs from Suno's CDN<br><br>
+    No requests are made to any third-party servers controlled by Smash Daddys or Raw Convict Records.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions? Contact <a href="mailto:phil@hotmessldn.com">phil@hotmessldn.com</a>
+  </p>
+
+  <p style="margin-top:48px;color:#999;font-size:12px">
+    &copy; 2026 Smash Daddys / Raw Convict Records &mdash;
+    <a href="https://rawmaster.smashd.tools">rawmaster.smashd.tools</a>
+  </p>
+</body>
+</html>

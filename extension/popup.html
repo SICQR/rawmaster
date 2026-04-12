@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 280px;
+    padding: 16px;
+    background: #0f0f0f;
+    color: #f0ece4;
+    font-family: 'Space Mono', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #1e1e1e;
+    padding-bottom: 12px;
+  }
+  .logo { color: #e63012; font-size: 18px; }
+  h3 {
+    color: #f0ece4;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  .sub { color: #555; font-size: 10px; letter-spacing: 0.06em; }
+
+  .status {
+    padding: 8px 10px;
+    border: 1px solid #2a2a2a;
+    border-radius: 3px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .status.ok  { border-color: #2ecc40; color: #2ecc40; background: rgba(46,204,64,0.06); }
+  .status.err { border-color: #e63012; color: #e63012; background: rgba(230,48,18,0.06); }
+  .status.checking { color: #555; }
+
+  .settings { margin-bottom: 14px; }
+  .setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #161616;
+  }
+  .setting:last-child { border-bottom: none; }
+  label { color: #888; font-size: 11px; }
+  select {
+    background: #161616;
+    color: #f0ece4;
+    border: 1px solid #2a2a2a;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  select:focus { outline: 1px solid #e63012; }
+
+  .footer {
+    padding-top: 10px;
+    border-top: 1px solid #161616;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-note { color: #444; font-size: 10px; }
+  a { color: #e63012; text-decoration: none; font-size: 11px; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="logo">⚡</span>
+  <div>
+    <h3>RAWMASTER</h3>
+    <div class="sub">for Suno</div>
+  </div>
+</div>
+
+<div id="status" class="status checking">Checking companion…</div>
+
+<div class="settings">
+  <div class="setting">
+    <label>Stems</label>
+    <select id="stems">
+      <option value="4">4 stems</option>
+      <option value="6">6 stems</option>
+    </select>
+  </div>
+  <div class="setting">
+    <label>MIDI</label>
+    <select id="midi">
+      <option value="true">Yes (bass stem)</option>
+      <option value="false">No</option>
+    </select>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="footer-note">v1.0.0</span>
+  <a id="store-link" href="https://scanme2.gumroad.com/l/rawmaster" target="_blank">Get Companion →</a>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
