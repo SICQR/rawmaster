@@ -33,9 +33,7 @@ BANNER = r"""
 
 SUPPORTED_FORMATS = {".mp3", ".wav", ".flac", ".aiff", ".aif", ".ogg", ".m4a"}
 
-GUMROAD_PRODUCT_ID = "PLACEHOLDER_REPLACE_WITH_REAL_ID"
-# Phil: replace with the real product_id from your Gumroad dashboard
-# (found in Settings > Integrations for the RAWMASTER listing)
+GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
 
 
 # ─────────────────────────────────────────────
