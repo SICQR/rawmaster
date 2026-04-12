@@ -155,7 +155,7 @@ def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -
 
     model = "htdemucs_6s" if six_stem else "htdemucs_ft"
     stems_out = output_dir / "stems"
-    stems_out.mkdir(exist_ok=True)
+    stems_out.mkdir(parents=True, exist_ok=True)
 
     cmd = [
         sys.executable, "-m", "demucs",
