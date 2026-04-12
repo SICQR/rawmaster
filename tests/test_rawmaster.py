@@ -251,7 +251,7 @@ class TestExtractMidi:
         midi_dir = tmp_path / "midi"
         midi_dir.mkdir()
         extract_midi(stem_paths, midi_dir)
-        midi_files = list(midi_dir.glob("*.mid"))
+        midi_files = list(midi_dir.rglob("*.mid"))
         assert len(midi_files) > 0, "No MIDI file created"
 
     @pytest.mark.slow
@@ -262,7 +262,7 @@ class TestExtractMidi:
         midi_dir = tmp_path / "midi"
         midi_dir.mkdir()
         extract_midi(stem_paths, midi_dir)
-        for midi_file in midi_dir.glob("*.mid"):
+        for midi_file in midi_dir.rglob("*.mid"):
             mid = mido.MidiFile(str(midi_file))
             total_notes = sum(
                 1 for track in mid.tracks for msg in track if msg.type == "note_on"
