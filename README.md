@@ -1,7 +1,7 @@
 # RAWMASTER
 **Smash Daddys Audio Tools | Strip it back. Own the stems.**
 
-Stem separation, remaster, MIDI extraction, and BPM/key detection Ñ all local, no cloud, no API calls.
+Stem separation, remaster, MIDI extraction, and BPM/key detection ï¿½ all local, no cloud, no API calls.
 
 ```
 ???????  ?????? ???    ???????   ???? ?????? ????????????????????????????????
@@ -44,7 +44,7 @@ Everything runs on your machine. No subscription. No internet required after fir
 - Python 3.9+
 - macOS, Linux, or Windows
 - ~1GB disk for AI models (downloaded once)
-- GPU optional Ñ CPU works fine (stems take longer)
+- GPU optional ï¿½ CPU works fine (stems take longer)
 
 ---
 
@@ -77,6 +77,21 @@ Then run:
 ```batch
 python rawmaster.py track.mp3 --stems --midi
 ```
+
+---
+
+## Developer mode
+
+If you cloned this repo yourself, `install.sh` detects the `.git` directory and writes the launcher with `RAWMASTER_SKIP_LICENSE=1` baked in â€” no Gumroad key needed.
+
+To bypass the license check without re-running the installer, set the env var before running:
+
+```bash
+export RAWMASTER_SKIP_LICENSE=1
+rawmaster track.mp3 --stems
+```
+
+Any non-empty value works â€” `1`, `true`, `yes`, etc. The launcher at `/usr/local/bin/rawmaster` inherits the variable from your shell automatically.
 
 ---
 
@@ -120,7 +135,7 @@ Output folder created at the same level as the input file.
 ## Remaster pipeline
 
 1. Load audio, resample to 44100 Hz, convert to float32
-2. Spectral gating via `noisereduce` Ñ kills shimmer and hiss without destroying transients (`prop_decrease=0.6`)
+2. Spectral gating via `noisereduce` ï¿½ kills shimmer and hiss without destroying transients (`prop_decrease=0.6`)
 3. LUFS normalisation to -14.0 (streaming standard) via `pyloudnorm`
 4. Hard limiter at -0.3 dBFS
 5. Write 24-bit WAV
@@ -141,7 +156,7 @@ Downloaded automatically on first use (~110MB total).
 
 ## License
 
-One-time purchase. **[scanme2.gumroad.com](https://scanme2.gumroad.com)** Ñ £19
+One-time purchase. **[scanme2.gumroad.com](https://scanme2.gumroad.com)** ï¿½ ï¿½19
 
 You'll receive a license key in your Gumroad receipt. Enter it on first run. Re-validated every 30 days (cached offline).
 
@@ -149,13 +164,13 @@ You'll receive a license key in your Gumroad receipt. Enter it on first run. Re-
 
 ## Troubleshooting
 
-**Stems are slow** Ñ CPU mode is normal. Expect 5Ð15 min per track. GPU speeds this up significantly.
+**Stems are slow** ï¿½ CPU mode is normal. Expect 5ï¿½15 min per track. GPU speeds this up significantly.
 
-**MIDI sounds wrong** Ñ Basic-Pitch works best on clean isolated bass or melodic lines. Bass stem is the most reliable.
+**MIDI sounds wrong** ï¿½ Basic-Pitch works best on clean isolated bass or melodic lines. Bass stem is the most reliable.
 
-**`rawmaster: command not found`** Ñ Run `source ~/.zshrc` after install, or restart your terminal.
+**`rawmaster: command not found`** ï¿½ Run `source ~/.zshrc` after install, or restart your terminal.
 
-**License validation fails offline** Ñ If you've validated before, cached license works for 30 days.
+**License validation fails offline** ï¿½ If you've validated before, cached license works for 30 days.
 
 ---
 
