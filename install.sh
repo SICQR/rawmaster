@@ -13,40 +13,56 @@ if ! command -v python3 &>/dev/null; then
     exit 1
 fi
 
-PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+PY_VER=$(python3 -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor))")
 echo "  Python $PY_VER detected"
-
 echo ""
-echo "  Installing Python dependencies (this may take a few minutes)..."
-pip3 install -r requirements.txt
-
-chmod +x rawmaster.py
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-RC="${HOME}/.zshrc"
-[ -f "${HOME}/.bashrc" ] && RC="${HOME}/.bashrc"
-
-if grep -q "alias rawmaster=" "$RC" 2>/dev/null; then
-    sed -i.bak "s|alias rawmaster=.*|alias rawmaster='python3 ${SCRIPT_DIR}/rawmaster.py'|" "$RC"
-    echo "  Updated existing rawmaster alias in $RC"
-else
-    echo "" >> "$RC"
-    echo "# RAWMASTER - Smash Daddys Audio Tools" >> "$RC"
-    echo "alias rawmaster='python3 ${SCRIPT_DIR}/rawmaster.py'" >> "$RC"
-    echo "  Added rawmaster alias to $RC"
+# Create venv if it doesn't exist
+if [ ! -d "$SCRIPT_DIR/.venv" ]; then
+    echo "  Creating virtual environment..."
+    python3 -m venv "$SCRIPT_DIR/.venv"
 fi
 
-if grep -q "alias rawmaster-ui=" "$RC" 2>/dev/null; then
-    sed -i.bak "s|alias rawmaster-ui=.*|alias rawmaster-ui='python3 ${SCRIPT_DIR}/app.py'|" "$RC"
-else
-    echo "alias rawmaster-ui='python3 ${SCRIPT_DIR}/app.py'" >> "$RC"
-fi
+# Activate venv
+source "$SCRIPT_DIR/.venv/bin/activate"
+
+echo "  Installing Python dependencies (this may take a few minutes)..."
+pip install --upgrade pip --quiet
+pip install -r "$SCRIPT_DIR/requirements.txt"
+
+chmod +x "$SCRIPT_DIR/rawmaster.py"
+
+# Write /usr/local/bin/rawmaster
+echo "  Writing launcher to /usr/local/bin/rawmaster..."
+RAWMASTER_LAUNCHER=$(cat <<LAUNCH
+#!/bin/bash
+source "$SCRIPT_DIR/.venv/bin/activate"
+exec python3 "$SCRIPT_DIR/rawmaster.py" "\$@"
+LAUNCH
+)
+echo "$RAWMASTER_LAUNCHER" | sudo tee /usr/local/bin/rawmaster > /dev/null
+sudo chmod +x /usr/local/bin/rawmaster
+
+# Write /usr/local/bin/rawmaster-ui
+echo "  Writing launcher to /usr/local/bin/rawmaster-ui..."
+RAWMASTER_UI_LAUNCHER=$(cat <<LAUNCH
+#!/bin/bash
+source "$SCRIPT_DIR/.venv/bin/activate"
+exec python3 "$SCRIPT_DIR/app.py" "\$@"
+LAUNCH
+)
+echo "$RAWMASTER_UI_LAUNCHER" | sudo tee /usr/local/bin/rawmaster-ui > /dev/null
+sudo chmod +x /usr/local/bin/rawmaster-ui
+
+echo ""
+echo "  Testing installation..."
+rawmaster --help
 
 echo ""
 echo "Done! RAWMASTER installed."
 echo ""
-echo "   Restart your terminal or run:  source $RC"
 echo "   CLI:  rawmaster track.mp3 --stems --midi"
 echo "   UI:   rawmaster-ui  (opens at http://localhost:7860)"
 echo ""
