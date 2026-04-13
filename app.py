@@ -5,6 +5,7 @@ Smash Daddys Audio Tools | Strip it back. Own the stems.
 Run: python3 app.py  ->  http://localhost:7860
 """
 
+import re
 import tempfile
 import time
 import zipfile
@@ -15,6 +16,12 @@ import gradio as gr
 # Import pipeline functions from rawmaster.py (same dir)
 from rawmaster import detect_info, remaster, remaster_with_reference, separate_stems, extract_midi, SUPPORTED_FORMATS
 
+# ── Status rendering ───────────────────────────────────────────────────────────
+
+STEM_ICONS = {
+    "vocals": "🎤", "drums": "🥁", "bass": "🎸", "other": "🎶",
+    "guitar": "🎵", "piano": "🎹",
+}
 
 def _elapsed(t0):
     """Format elapsed time since t0."""
@@ -22,6 +29,45 @@ def _elapsed(t0):
     if s < 60:
         return f"{s:.0f}s"
     return f"{int(s // 60)}m {int(s % 60)}s"
+
+
+def _progress_bar(pct):
+    """Render an HTML progress bar."""
+    pct = max(0, min(100, int(pct)))
+    return (
+        f'<div style="background:#1e1e1e;border-radius:4px;height:18px;margin:6px 0;overflow:hidden">'
+        f'<div style="background:linear-gradient(90deg,#e63012,#ff5533);height:100%;width:{pct}%;'
+        f'border-radius:4px;transition:width 0.5s ease;display:flex;align-items:center;'
+        f'justify-content:center;font-size:10px;color:#fff;font-family:monospace;font-weight:700">'
+        f'{pct}%</div></div>'
+    )
+
+
+def _render_status(lines, progress=None, stem_list=None):
+    """Build HTML status box from lines, optional progress bar, optional stem list."""
+    html = '<div style="font-family:monospace;font-size:13px;line-height:1.8;color:#f0ece4">'
+    for line in lines:
+        if line.startswith("DONE"):
+            html += f'<div style="color:#2ecc40;font-weight:700;margin-top:8px">{line}</div>'
+        elif "failed" in line.lower() or "error" in line.lower():
+            html += f'<div style="color:#e63012">{line}</div>'
+        elif "still working" in line or "elapsed" in line:
+            html += f'<div style="color:#C8962C">{line}</div>'
+        else:
+            html += f'<div>{line}</div>'
+    if progress is not None:
+        html += _progress_bar(progress)
+    if stem_list:
+        html += '<div style="margin-top:6px;font-size:12px;color:#888">'
+        for stem_name, done in stem_list:
+            icon = STEM_ICONS.get(stem_name, "🎶")
+            if done:
+                html += f'<span style="color:#2ecc40;margin-right:12px">{icon} {stem_name} ✓</span>'
+            else:
+                html += f'<span style="color:#444;margin-right:12px">{icon} {stem_name} ...</span>'
+        html += '</div>'
+    html += '</div>'
+    return html
 
 css = """
 body, .gradio-container { background: #080808 !important; color: #f0ece4 !important; }
@@ -36,16 +82,28 @@ footer { display: none !important; }
 """
 
 
+def _yld(status, progress=None, stem_list=None, remaster=None, stems_zip=None, midi_zip=None, info=""):
+    """Helper to yield a consistent tuple with rendered HTML status."""
+    return (
+        _render_status(status, progress=progress, stem_list=stem_list),
+        str(remaster) if remaster else None,
+        str(remaster) if remaster else None,
+        str(stems_zip) if stems_zip else None,
+        str(midi_zip) if midi_zip else None,
+        info,
+    )
+
+
 def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
     if audio_input is None:
-        yield "Drop a track above and click RAWMASTER IT.", None, None, None, None, ""
+        yield _yld(["Drop a track above and click RAWMASTER IT."])
         return
 
     audio_path = Path(audio_input)
 
     # Input validation
     if audio_path.suffix.lower() not in SUPPORTED_FORMATS:
-        yield f"Unsupported format: {audio_path.suffix}\nSupported: MP3, WAV, FLAC, AIFF, OGG, M4A", None, None, None, None, ""
+        yield _yld([f"Unsupported format: {audio_path.suffix}", "Supported: MP3, WAV, FLAC, AIFF, OGG, M4A"])
         return
 
     file_mb = audio_path.stat().st_size / (1024 * 1024)
@@ -55,15 +113,15 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
     total_steps = 2 + (1 if do_stems else 0) + (1 if do_midi and do_stems else 0)
     step = 0
     status = []
-    outputs = []  # track what was produced
+    outputs = []
 
     if file_mb > 500:
-        status.append(f"Large file ({file_mb:.0f}MB) — stem separation may take a while.\n")
+        status.append(f"Large file ({file_mb:.0f}MB) — stem separation may take a while.")
 
     # Step 1: BPM + Key
     step += 1
     status.append(f"[{step}/{total_steps}] Detecting BPM + key...")
-    yield "\n".join(status), None, None, None, None, ""
+    yield _yld(status)
 
     try:
         info_dir = tmp_dir / "info"
@@ -75,7 +133,7 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
         info_str = ""
         status[-1] = f"[{step}/{total_steps}] BPM/Key failed: {e}"
 
-    yield "\n".join(status), None, None, None, None, info_str
+    yield _yld(status, info=info_str)
 
     # Step 2: Remaster
     step += 1
@@ -84,7 +142,7 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
         status.append(f"[{step}/{total_steps}] Reference mastering — matching to {Path(reference_input).name}...")
     else:
         status.append(f"[{step}/{total_steps}] Remastering...")
-    yield "\n".join(status), None, None, None, None, info_str
+    yield _yld(status, info=info_str)
 
     try:
         remaster_dir = tmp_dir / "remaster"
@@ -100,26 +158,31 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
             outputs.append("remaster")
     except Exception as e:
         status[-1] = f"[{step}/{total_steps}] Remaster failed: {e}"
-        yield "\n".join(status), None, None, None, None, info_str
+        yield _yld(status, info=info_str)
         return
 
-    yield "\n".join(status), str(remaster_path), str(remaster_path), None, None, info_str
+    yield _yld(status, remaster=remaster_path, info=info_str)
 
     stems_zip_path = None
     midi_zip_path = None
+    stem_status = None
 
     if do_stems:
         step += 1
         t_step = time.time()
-        status.append(f"[{step}/{total_steps}] Separating stems ({n_stems}-stem) — typically 5-15 min on CPU...")
-        yield "\n".join(status), str(remaster_path), str(remaster_path), None, None, info_str
+        six_stem = (str(n_stems) == "6")
+        expected_stems = ["vocals", "drums", "bass", "other"]
+        if six_stem:
+            expected_stems += ["guitar", "piano"]
+
+        status.append(f"[{step}/{total_steps}] Separating stems ({n_stems}-stem)...")
+        stem_status = [(s, False) for s in expected_stems]
+        yield _yld(status, progress=0, stem_list=stem_status, remaster=remaster_path, info=info_str)
 
         try:
-            six_stem = (str(n_stems) == "6")
             stems_dir = tmp_dir / "stems_run"
             stems_dir.mkdir()
 
-            # Run Demucs with live heartbeat so user knows it hasn't crashed
             import subprocess as sp
             import sys as _sys
             import os as _os
@@ -134,32 +197,60 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
                 "-o", str(stems_dir / "_demucs_tmp"),
                 str(audio_path),
             ]
-            proc = sp.Popen(demucs_cmd, stdout=sp.PIPE, stderr=sp.PIPE)
 
-            # Poll every 5 seconds, update elapsed time so user sees it's alive
+            # Write stderr to temp file so we can read Demucs progress
+            stderr_path = tmp_dir / "demucs_stderr.txt"
+            stderr_file = open(stderr_path, "w")
+            proc = sp.Popen(demucs_cmd, stdout=sp.PIPE, stderr=stderr_file)
+
+            # Poll every 4 seconds — parse percentage from Demucs tqdm output
+            last_pct = 0
             while proc.poll() is None:
-                time.sleep(5)
+                time.sleep(4)
                 elapsed = _elapsed(t_step)
-                status[-1] = f"[{step}/{total_steps}] Separating stems ({n_stems}-stem) — {elapsed} elapsed, still working..."
-                yield "\n".join(status), str(remaster_path), str(remaster_path), None, None, info_str
+
+                # Read stderr for tqdm progress (e.g. "45%|████")
+                try:
+                    stderr_file.flush()
+                    raw = open(stderr_path).read()
+                    pct_matches = re.findall(r'(\d+)%\|', raw)
+                    if pct_matches:
+                        last_pct = int(pct_matches[-1])
+                except Exception:
+                    pass
+
+                status[-1] = f"[{step}/{total_steps}] Separating stems ({n_stems}-stem) — {elapsed} elapsed"
+                yield _yld(status, progress=last_pct, stem_list=stem_status,
+                           remaster=remaster_path, info=info_str)
+
+            stderr_file.close()
 
             if proc.returncode != 0:
-                stderr = proc.stderr.read().decode()
-                raise RuntimeError(f"Demucs failed: {stderr[:200]}")
+                raw = open(stderr_path).read()
+                raise RuntimeError(f"Demucs failed: {raw[:200]}")
 
-            # Move stems from Demucs temp dir to stems_out
+            # Move stems and show each one appearing
             import shutil
             track_name = audio_path.stem
             demucs_track_dir = stems_dir / "_demucs_tmp" / model / track_name
             stems_out = stems_dir / "stems"
             stems_out.mkdir(parents=True, exist_ok=True)
             stem_paths = {}
-            for stem_file in demucs_track_dir.glob("*.wav"):
+            found_stems = set()
+            for stem_file in sorted(demucs_track_dir.glob("*.wav")):
                 dest = stems_out / stem_file.name
                 shutil.move(str(stem_file), str(dest))
                 stem_paths[stem_file.stem] = dest
+                found_stems.add(stem_file.stem)
+                # Update stem checklist
+                stem_status = [(s, s in found_stems) for s in expected_stems]
+                status[-1] = f"[{step}/{total_steps}] Extracting stems..."
+                yield _yld(status, progress=100, stem_list=stem_status,
+                           remaster=remaster_path, info=info_str)
+
             shutil.rmtree(str(stems_dir / "_demucs_tmp"), ignore_errors=True)
 
+            stem_status = [(s, True) for s in expected_stems]
             status[-1] = f"[{step}/{total_steps}] Stems separated — {len(stem_paths)} tracks ({_elapsed(t_step)})"
             outputs.append(f"{len(stem_paths)} stems")
 
@@ -170,16 +261,18 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
 
         except Exception as e:
             status[-1] = f"[{step}/{total_steps}] Stem separation failed: {e}"
-            yield "\n".join(status), str(remaster_path), str(remaster_path), None, None, info_str
+            yield _yld(status, remaster=remaster_path, info=info_str)
             return
 
-        yield "\n".join(status), str(remaster_path), str(remaster_path), str(stems_zip_path), None, info_str
+        yield _yld(status, progress=100, stem_list=stem_status,
+                    remaster=remaster_path, stems_zip=stems_zip_path, info=info_str)
 
         if do_midi:
             step += 1
             t_step = time.time()
             status.append(f"[{step}/{total_steps}] Extracting MIDI...")
-            yield "\n".join(status), str(remaster_path), str(remaster_path), str(stems_zip_path), None, info_str
+            yield _yld(status, progress=100, stem_list=stem_status,
+                        remaster=remaster_path, stems_zip=stems_zip_path, info=info_str)
 
             try:
                 midi_dir = tmp_dir / "midi"
@@ -201,14 +294,8 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
     # Completion summary
     status.append("")
     status.append(f"DONE — {' + '.join(outputs)} ready ({_elapsed(t0)} total)")
-    yield (
-        "\n".join(status),
-        str(remaster_path),
-        str(remaster_path),
-        str(stems_zip_path) if stems_zip_path else None,
-        str(midi_zip_path) if midi_zip_path else None,
-        info_str,
-    )
+    yield _yld(status, progress=100, stem_list=stem_status if do_stems else None,
+               remaster=remaster_path, stems_zip=stems_zip_path, midi_zip=midi_zip_path, info=info_str)
 
 
 with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
@@ -255,11 +342,8 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
             run_btn = gr.Button("RAWMASTER IT", variant="primary", size="lg")
 
         with gr.Column(scale=1):
-            status_box = gr.Textbox(
-                label="Status",
-                lines=8,
-                interactive=False,
-                placeholder="Upload a track and click RAWMASTER IT...",
+            status_box = gr.HTML(
+                value='<div style="font-family:monospace;font-size:13px;color:#555;padding:16px">Upload a track and click RAWMASTER IT...</div>',
             )
             remaster_audio = gr.Audio(
                 label="Remastered track",
