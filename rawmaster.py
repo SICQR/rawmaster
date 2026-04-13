@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -143,6 +144,58 @@ def remaster(audio_path: Path, output_dir: Path) -> Path:
     return out_path
 
 
+def remaster_with_reference(audio_path: Path, reference_path: Path, output_dir: Path) -> Path:
+    """Reference mastering — match EQ, loudness, and dynamics to a reference track."""
+    if not reference_path.exists():
+        raise FileNotFoundError(f"Reference file not found: {reference_path}")
+
+    try:
+        import matchering as mg
+    except ImportError:
+        print("  ⚠️  matchering not installed. Install with: pip install matchering")
+        print("  Falling back to standard remaster…")
+        return remaster(audio_path, output_dir)
+
+    print(f"  🎯 Reference mastering {audio_path.name} → matched to {reference_path.name}…")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Denoise target first (spectral gate) — cleaner input = better spectral match
+    audio, sr = librosa.load(str(audio_path), sr=44100, mono=False, dtype=np.float32)
+    if audio.ndim == 1:
+        audio = np.expand_dims(audio, axis=0)
+    denoised = np.stack([
+        nr.reduce_noise(y=ch, sr=sr, stationary=False, prop_decrease=0.6)
+        for ch in audio
+    ])
+
+    # Write denoised audio to temp file (matchering needs file paths)
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".wav")
+    os.close(tmp_fd)
+
+    try:
+        sf.write(tmp_path, denoised.T, sr, subtype="PCM_24")
+
+        out_name = audio_path.stem + "_RAWMASTER.wav"
+        out_path = output_dir / out_name
+
+        mg.process(
+            target=tmp_path,
+            reference=str(reference_path),
+            results=[mg.pcm24(str(out_path))],
+        )
+        print(f"  ✅ Reference master saved → {out_path.name}")
+        return out_path
+
+    except Exception as e:
+        print(f"  ⚠️  Reference mastering failed: {e}")
+        print("  Falling back to standard remaster…")
+        return remaster(audio_path, output_dir)
+
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
 # ─────────────────────────────────────────────
 #  STEP 2 — STEM SEPARATION
 # ─────────────────────────────────────────────
@@ -269,6 +322,7 @@ def process_file(
     do_midi_all: bool = False,
     do_info: bool = False,
     six_stem: bool = False,
+    reference_path: Path = None,
 ):
     if not audio_path.exists():
         print(f"  ❌ File not found: {audio_path}")
@@ -290,7 +344,10 @@ def process_file(
         return
 
     # Always remaster (unless info-only)
-    remaster(audio_path, output_root)
+    if reference_path:
+        remaster_with_reference(audio_path, reference_path, output_root)
+    else:
+        remaster(audio_path, output_root)
 
     # BPM + key always written alongside remaster
     detect_info(audio_path, output_root)
@@ -325,6 +382,9 @@ def main():
                         help="Extract MIDI from bass + vocals stems")
     parser.add_argument("--info", action="store_true",
                         help="BPM + key detection only")
+    parser.add_argument("--ref", "--reference", dest="reference",
+                        metavar="FILE",
+                        help="Reference track for mastering (match EQ + loudness + dynamics)")
     parser.add_argument("--version", action="version", version=f"RAWMASTER {__version__}")
 
     args = parser.parse_args()
@@ -342,6 +402,10 @@ def main():
     do_midi = args.midi
     do_midi_all = args.midi_all
     do_info = args.info
+    reference_path = Path(args.reference) if args.reference else None
+    if reference_path and not reference_path.exists():
+        print(f"  ❌ Reference file not found: {reference_path}")
+        sys.exit(1)
 
     # Batch mode (folder)
     if input_path.is_dir():
@@ -354,9 +418,9 @@ def main():
             sys.exit(1)
         print(f"  📂 Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
         for f in audio_files:
-            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem)
+            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path)
     else:
-        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem)
+        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path)
 
 
 if __name__ == "__main__":

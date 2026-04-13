@@ -77,6 +77,51 @@ class TestDetectInfo:
         assert (info_dir / "info.txt").exists()
 
 
+class TestRemasterWithReference:
+    def test_output_file_created(self, tmp_path):
+        from rawmaster import remaster_with_reference
+        target = _make_sine(tmp_path / "target.wav", freq=440.0)
+        ref = _make_sine(tmp_path / "reference.wav", freq=880.0, amplitude=0.5)
+        out = remaster_with_reference(target, ref, tmp_path / "out")
+        assert out.exists()
+
+    def test_output_is_24bit_wav(self, tmp_path):
+        from rawmaster import remaster_with_reference
+        target = _make_sine(tmp_path / "target.wav")
+        ref = _make_sine(tmp_path / "reference.wav", amplitude=0.5)
+        out = remaster_with_reference(target, ref, tmp_path / "out")
+        info = sf.info(str(out))
+        assert info.subtype == "PCM_24"
+
+    def test_reference_not_found_raises(self, tmp_path):
+        from rawmaster import remaster_with_reference
+        target = _make_sine(tmp_path / "target.wav")
+        with pytest.raises(FileNotFoundError):
+            remaster_with_reference(target, tmp_path / "nonexistent.wav", tmp_path / "out")
+
+    def test_fallback_on_matchering_failure(self, tmp_path):
+        """Too-short reference triggers matchering error; should fall back to standard remaster."""
+        from rawmaster import remaster_with_reference
+        target = _make_sine(tmp_path / "target.wav")
+        ref = _make_sine(tmp_path / "ref_short.wav", duration=0.1)
+        out = remaster_with_reference(target, ref, tmp_path / "out")
+        assert out.exists()
+
+    def test_stereo_input(self, tmp_path):
+        from rawmaster import remaster_with_reference
+        sr = 44100
+        t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
+        stereo = np.stack([
+            np.sin(2 * np.pi * 440 * t) * 0.5,
+            np.sin(2 * np.pi * 550 * t) * 0.5,
+        ]).T.astype(np.float32)
+        target = tmp_path / "stereo_target.wav"
+        sf.write(str(target), stereo, sr)
+        ref = _make_sine(tmp_path / "ref.wav", amplitude=0.5)
+        out = remaster_with_reference(target, ref, tmp_path / "out")
+        assert out.exists()
+
+
 class TestLicense:
     @pytest.mark.skipif(
         os.environ.get("RAWMASTER_SKIP_LICENSE") == "1",

@@ -188,17 +188,24 @@ async function handleClick(e, card, btn) {
   btn.disabled    = true;
 
   // Read settings from storage
-  const { stems = '4', midi = 'true' } = await chrome.storage.local.get(['stems', 'midi']);
+  const { stems = '4', midi = 'true', reference = 'off', reference_url = '' } =
+    await chrome.storage.local.get(['stems', 'midi', 'reference', 'reference_url']);
+
+  const payload = {
+    audio_url: audioUrl,
+    stems:     parseInt(stems, 10),
+    midi:      midi === 'true',
+  };
+  if (reference === 'on' && reference_url) {
+    payload.reference_url = reference_url;
+    btn.textContent = '🎯 Ref mastering…';
+  }
 
   try {
     const resp = await fetch(`${COMPANION_URL}/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        audio_url: audioUrl,
-        stems:     parseInt(stems, 10),
-        midi:      midi === 'true',
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!resp.ok) {

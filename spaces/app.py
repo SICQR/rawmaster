@@ -124,7 +124,7 @@ def _crop_to_limit(audio_path, tmp_dir, limit_sec):
     return cropped_path
 
 
-def process(audio_input, do_stems, n_stems, do_midi, midi_all):
+def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
     if audio_input is None:
         yield "No file uploaded.", None, None, None, None, ""
         return
@@ -132,6 +132,10 @@ def process(audio_input, do_stems, n_stems, do_midi, midi_all):
     audio_path = Path(audio_input)
     tmp_dir = Path(tempfile.mkdtemp(prefix="rawmaster_demo_"))
     status = [WATERMARK, ""]
+
+    if reference_input:
+        status.append("🎯 Reference mastering is a paid feature → scanme2.gumroad.com")
+        status.append("   Using standard remaster for this demo.\n")
 
     duration = librosa.get_duration(path=str(audio_path))
     if duration > DEMO_LIMIT_SEC:
@@ -227,6 +231,11 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER Demo") as demo:
                 type="filepath",
                 sources=["upload"],
             )
+            reference_input = gr.Audio(
+                label="Reference track (paid feature — preview only in demo)",
+                type="filepath",
+                sources=["upload"],
+            )
             do_stems = gr.Checkbox(label="Separate stems", value=True)
             n_stems = gr.Radio(["4", "6"], label="Number of stems", value="4", visible=True)
             do_midi = gr.Checkbox(label="Extract MIDI (bass stem)", value=True, visible=True)
@@ -249,7 +258,7 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER Demo") as demo:
 
     run_btn.click(
         fn=process,
-        inputs=[audio_input, do_stems, n_stems, do_midi, midi_all],
+        inputs=[audio_input, reference_input, do_stems, n_stems, do_midi, midi_all],
         outputs=[status_box, remaster_audio, remaster_dl, stems_dl, midi_dl, info_box],
     )
 

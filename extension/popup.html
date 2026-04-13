@@ -37,10 +37,36 @@
     margin-bottom: 14px;
     font-size: 11px;
     letter-spacing: 0.04em;
+    display: flex; align-items: center; gap: 8px;
   }
   .status.ok  { border-color: #2ecc40; color: #2ecc40; background: rgba(46,204,64,0.06); }
   .status.err { border-color: #e63012; color: #e63012; background: rgba(230,48,18,0.06); }
   .status.checking { color: #555; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: #2ecc40; box-shadow: 0 0 6px rgba(46,204,64,0.4); }
+  .dot-red { background: #e63012; box-shadow: 0 0 6px rgba(230,48,18,0.4); }
+  .dot-spin {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid #333; border-top-color: #888;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .help-tip {
+    display: inline-block; width: 14px; height: 14px;
+    border-radius: 50%; background: #222; border: 1px solid #333;
+    text-align: center; font-size: 9px; line-height: 14px;
+    color: #666; cursor: help; position: relative;
+  }
+  .help-tip:hover::after {
+    content: attr(data-tip);
+    position: absolute; left: 20px; top: -4px;
+    background: #1a1a1a; border: 1px solid #333; color: #ccc;
+    padding: 4px 8px; border-radius: 3px;
+    font-size: 10px; white-space: nowrap; z-index: 10;
+  }
+  .ref-url-valid { border-color: #2ecc40 !important; }
+  .ref-url-invalid { border-color: #e63012 !important; }
 
   .settings { margin-bottom: 14px; }
   .setting {
@@ -85,22 +111,35 @@
   </div>
 </div>
 
-<div id="status" class="status checking">Checking companion…</div>
+<div id="status" class="status checking"><span class="dot-spin"></span> <span id="status-text">Checking companion…</span></div>
 
 <div class="settings">
   <div class="setting">
-    <label>Stems</label>
+    <label>Stems <span class="help-tip" data-tip="4 = vocals, drums, bass, other. 6 = adds guitar + piano">?</span></label>
     <select id="stems">
       <option value="4">4 stems</option>
       <option value="6">6 stems</option>
     </select>
   </div>
   <div class="setting">
-    <label>MIDI</label>
+    <label>MIDI <span class="help-tip" data-tip="Extract bass notes as MIDI for your DAW">?</span></label>
     <select id="midi">
       <option value="true">Yes (bass stem)</option>
       <option value="false">No</option>
     </select>
+  </div>
+  <div class="setting">
+    <label>Reference master <span class="help-tip" data-tip="Match EQ + loudness to a pro reference track">?</span></label>
+    <select id="reference">
+      <option value="off">Off (standard)</option>
+      <option value="on">On (match to ref)</option>
+    </select>
+  </div>
+  <div id="ref-url-row" class="setting" style="display:none;">
+    <input id="ref-url" type="text" placeholder="Reference track URL (.mp3)" style="
+      width:100%;background:#161616;color:#f0ece4;border:1px solid #2a2a2a;
+      padding:4px 6px;border-radius:2px;font-family:inherit;font-size:11px;
+    ">
   </div>
 </div>
 

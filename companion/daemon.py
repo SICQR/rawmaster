@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from rawmaster import (
     detect_info,
     remaster,
+    remaster_with_reference,
     separate_stems,
     extract_midi,
     check_license,
@@ -37,13 +38,14 @@ def health():
 @app.route("/process", methods=["POST"])
 def process():
     """
-    Accepts:  JSON { "audio_url": "https://...", "stems": 4, "midi": true }
+    Accepts:  JSON { "audio_url": "https://...", "stems": 4, "midi": true, "reference_url": "https://..." }
     Returns:  ZIP file — remaster.wav + stems/ + midi/ + info.txt
     """
     import requests as req
 
     data = request.json or {}
     audio_url = data.get("audio_url")
+    reference_url = data.get("reference_url")
     n_stems = int(data.get("stems", 4))
     do_midi = bool(data.get("midi", True))
 
@@ -62,11 +64,24 @@ def process():
             for chunk in resp.iter_content(8192):
                 f.write(chunk)
 
+        # ── Download reference (if provided) ──────────────────────────
+        reference_path = None
+        if reference_url:
+            ref_resp = req.get(reference_url, stream=True, timeout=30,
+                               headers={"User-Agent": "Mozilla/5.0"})
+            ref_resp.raise_for_status()
+            reference_path = tmp_dir / "reference.mp3"
+            with open(reference_path, "wb") as f:
+                for chunk in ref_resp.iter_content(8192):
+                    f.write(chunk)
+
         # ── Remaster ───────────────────────────────────────────────────
         remaster_dir = tmp_dir / "remaster"
         remaster_dir.mkdir()
-        remaster_path = remaster(audio_path, remaster_dir)
-        # remaster() returns path to the _RAWMASTER.wav inside remaster_dir
+        if reference_path:
+            remaster_path = remaster_with_reference(audio_path, reference_path, remaster_dir)
+        else:
+            remaster_path = remaster(audio_path, remaster_dir)
 
         # ── BPM + Key ──────────────────────────────────────────────────
         info_dir = tmp_dir / "info"

@@ -81,7 +81,7 @@ export default function AudioAnalyzer() {
       {/* Processing indicator */}
       {isProcessing && (
         <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-[#141414] px-5 py-4">
-          <div className="w-4 h-4 rounded-full border-2 border-[#C8962C] border-t-transparent animate-spin shrink-0" />
+          <div className="w-4 h-4 rounded-full border-2 border-[#e63012] border-t-transparent animate-spin shrink-0" />
           <span className="text-sm text-[#E5E5E5]/70 font-mono">
             {phase === 'decoding' ? 'Decoding audio…' : 'Analysing BPM & key…'}
           </span>
@@ -122,13 +122,30 @@ export default function AudioAnalyzer() {
         <AnalysisResults result={result} filename={filename} />
       )}
 
+      {/* Upsell */}
+      {phase === 'done' && (
+        <a
+          href="https://scanme2.gumroad.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-xl border border-[#e63012]/20 bg-[#e63012]/5 px-5 py-4 hover:bg-[#e63012]/10 transition-colors"
+        >
+          <p className="text-sm font-mono text-[#E5E5E5]/80">
+            Need stems, MIDI, or reference mastering?
+          </p>
+          <p className="text-xs font-mono text-[#e63012] mt-1">
+            Get Full RAWMASTER — from £19, one-time, 100% local →
+          </p>
+        </a>
+      )}
+
       {/* Analyse another */}
       {phase === 'done' && (
         <button
           onClick={reset}
           className="w-full rounded-xl border border-white/[0.08] bg-transparent px-5 py-3 text-sm text-white/40 hover:text-white/70 hover:border-white/20 transition-colors font-mono"
         >
-          ↑ Analyse another file
+          Analyse another file
         </button>
       )}
     </div>

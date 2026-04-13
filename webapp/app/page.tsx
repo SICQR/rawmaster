@@ -6,10 +6,10 @@ export default function Home() {
       {/* Header */}
       <div className="w-full max-w-2xl mx-auto mb-12 space-y-2">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-2xl font-bold tracking-tighter text-[#C8962C]">
+          <span className="font-mono text-2xl font-bold tracking-tighter text-[#e63012]">
             RAWMASTER
           </span>
-          <span className="rounded-full border border-[#C8962C]/30 px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest text-[#C8962C]/70">
+          <span className="rounded-full border border-[#e63012]/30 px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest text-[#e63012]/70">
             web
           </span>
         </div>
@@ -17,6 +17,12 @@ export default function Home() {
           Drag-drop any audio file. BPM + key detection runs entirely in your browser.
           <br />
           No upload. No login. No limits.
+        </p>
+        <p className="text-xs text-white/20 font-mono mt-2">
+          Need stems, MIDI, or reference mastering?{' '}
+          <a href="https://scanme2.gumroad.com" target="_blank" rel="noopener noreferrer" className="text-[#e63012]/60 hover:text-[#e63012] transition-colors">
+            Get the full version
+          </a>
         </p>
       </div>
 
@@ -27,7 +33,7 @@ export default function Home() {
       <footer className="mt-auto pt-16 pb-6 text-center">
         <p className="text-xs font-mono text-white/20">
           Powered by{' '}
-          <span className="text-[#C8962C]/60">RAWMASTER</span>
+          <span className="text-[#e63012]/60">RAWMASTER</span>
           {' '}· Web Audio API · Runs 100% client-side
         </p>
       </footer>

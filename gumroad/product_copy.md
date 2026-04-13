@@ -26,6 +26,7 @@ RAWMASTER is a command-line tool that turns any audio file into clean stems, a r
 **What you get:**
 → 4-stem separation via HTDemucs v4 (vocals / drums / bass / other)
 → Remaster pipeline: spectral gating + LUFS normalisation + hard limiter
+→ Reference mastering: match your track's EQ, loudness + dynamics to any reference (--ref)
 → MIDI extraction from bass stem (polyphonic, via Basic-Pitch)
 → BPM + musical key detection on every track
 → Batch mode: process a whole folder in one command
@@ -37,6 +38,7 @@ RAWMASTER is a command-line tool that turns any audio file into clean stems, a r
 **Commands:**
 ```
 rawmaster track.mp3                  → remaster only
+rawmaster track.mp3 --ref pro.wav    → reference mastering
 rawmaster track.mp3 --stems          → remaster + 4 stems
 rawmaster track.mp3 --stems --midi   → + MIDI from bass
 rawmaster ./folder/ --stems          → batch mode
@@ -80,7 +82,7 @@ RAWMASTER Desktop is the drag-and-drop version of RAWMASTER — same powerful pi
 Open the app in your browser, drop your track, click the button. You get back a remastered WAV, 4 clean stems, MIDI, and BPM + key info. All local, all private, all yours.
 
 **What you get:**
-→ Everything in the CLI version
+→ Everything in the CLI version (including reference mastering)
 → Drag-and-drop browser UI (runs at localhost:7860)
 → In-browser audio playback of remastered track
 → One-click download of stems ZIP and MIDI ZIP

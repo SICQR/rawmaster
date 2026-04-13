@@ -27,7 +27,7 @@ Stem separation, remaster, MIDI extraction, and BPM/key detection � all local,
 
 | Output | Details |
 |--------|---------|
-| `{track}_RAWMASTER.wav` | Spectral gating + LUFS normalisation + hard limiter, 24-bit WAV |
+| `{track}_RAWMASTER.wav` | Spectral gating + LUFS normalisation + hard limiter, 24-bit WAV (or reference-matched when using `--ref`) |
 | `stems/vocals.wav` | HTDemucs fine-tuned model |
 | `stems/drums.wav` | HTDemucs fine-tuned model |
 | `stems/bass.wav` | HTDemucs fine-tuned model |
@@ -99,6 +99,7 @@ Any non-empty value works — `1`, `true`, `yes`, etc. The launcher at `/usr/loc
 
 ```bash
 rawmaster track.mp3                    # remaster only
+rawmaster track.mp3 --ref pro_mix.wav # reference mastering (match EQ + loudness)
 rawmaster track.mp3 --stems           # remaster + 4 stems
 rawmaster track.mp3 --stems --midi    # stems + MIDI (bass only)
 rawmaster track.mp3 --stems --midi-all # stems + MIDI (bass + vocals)
@@ -135,10 +136,12 @@ Output folder created at the same level as the input file.
 ## Remaster pipeline
 
 1. Load audio, resample to 44100 Hz, convert to float32
-2. Spectral gating via `noisereduce` � kills shimmer and hiss without destroying transients (`prop_decrease=0.6`)
+2. Spectral gating via `noisereduce` -- kills shimmer and hiss without destroying transients (`prop_decrease=0.6`)
 3. LUFS normalisation to -14.0 (streaming standard) via `pyloudnorm`
 4. Hard limiter at -0.3 dBFS
 5. Write 24-bit WAV
+
+**With `--ref`:** Steps 3-4 are replaced by `matchering` -- your track's spectral profile, loudness, and dynamics are matched to the reference track. Denoising (step 2) still runs first for a cleaner match.
 
 ---
 
@@ -149,6 +152,7 @@ Output folder created at the same level as the input file.
 | Stem separation | HTDemucs fine-tuned (`htdemucs_ft`) |
 | MIDI extraction | Basic-Pitch (Spotify/GitHub) |
 | Noise reduction | noisereduce (spectral gating) |
+| Reference mastering | matchering (spectral + loudness + dynamics matching) |
 
 Downloaded automatically on first use (~110MB total).
 

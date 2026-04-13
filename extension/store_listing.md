@@ -16,7 +16,7 @@
 ## Short description (132 chars max)
 
 ```
-Get clean stems and a remastered WAV from any Suno track — right in your browser. Requires RAWMASTER Companion app.
+Stems, reference mastering, and MIDI from any Suno track — right in your browser. Requires RAWMASTER Companion app.
 ```
 
 *(116 chars)*
@@ -30,6 +30,7 @@ RAWMASTER for Suno adds a single button to every track on suno.com.
 
 Click it → your track gets processed locally on your machine → you download a ZIP with:
   → Remastered WAV (spectral gating + LUFS normalisation + hard limiter)
+  → Reference mastering: match your track's EQ, loudness + dynamics to any reference
   → 4 clean stems: vocals, drums, bass, other (HTDemucs fine-tuned)
   → MIDI extracted from bass stem (Basic-Pitch)
   → BPM and key detection written to info.txt
@@ -50,6 +51,7 @@ If the Companion isn't running, the button shows you where to download it.
 SETTINGS (in the extension popup):
   → Choose 4 or 6 stems
   → Toggle MIDI extraction on/off
+  → Reference mastering: paste a reference track URL to match your master against
 
 PRIVACY:
 This extension does not collect, transmit, or store any user data. All processing happens via the local Companion app running at 127.0.0.1. Nothing leaves your device.
