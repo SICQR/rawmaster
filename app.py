@@ -118,7 +118,48 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
             six_stem = (str(n_stems) == "6")
             stems_dir = tmp_dir / "stems_run"
             stems_dir.mkdir()
-            stem_paths = separate_stems(audio_path, stems_dir, six_stem=six_stem)
+
+            # Run Demucs with live heartbeat so user knows it hasn't crashed
+            import subprocess as sp
+            import sys as _sys
+            import os as _os
+            model = "htdemucs_6s" if six_stem else "htdemucs_ft"
+            demucs_cmd = [
+                _sys.executable, "-m", "demucs",
+                "-n", model,
+                "--shifts", _os.environ.get("RAWMASTER_TEST_SHIFTS", "2"),
+                "--overlap", "0.25",
+                "--float32",
+                "--clip-mode", "rescale",
+                "-o", str(stems_dir / "_demucs_tmp"),
+                str(audio_path),
+            ]
+            proc = sp.Popen(demucs_cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+
+            # Poll every 5 seconds, update elapsed time so user sees it's alive
+            while proc.poll() is None:
+                time.sleep(5)
+                elapsed = _elapsed(t_step)
+                status[-1] = f"[{step}/{total_steps}] Separating stems ({n_stems}-stem) — {elapsed} elapsed, still working..."
+                yield "\n".join(status), str(remaster_path), str(remaster_path), None, None, info_str
+
+            if proc.returncode != 0:
+                stderr = proc.stderr.read().decode()
+                raise RuntimeError(f"Demucs failed: {stderr[:200]}")
+
+            # Move stems from Demucs temp dir to stems_out
+            import shutil
+            track_name = audio_path.stem
+            demucs_track_dir = stems_dir / "_demucs_tmp" / model / track_name
+            stems_out = stems_dir / "stems"
+            stems_out.mkdir(parents=True, exist_ok=True)
+            stem_paths = {}
+            for stem_file in demucs_track_dir.glob("*.wav"):
+                dest = stems_out / stem_file.name
+                shutil.move(str(stem_file), str(dest))
+                stem_paths[stem_file.stem] = dest
+            shutil.rmtree(str(stems_dir / "_demucs_tmp"), ignore_errors=True)
+
             status[-1] = f"[{step}/{total_steps}] Stems separated — {len(stem_paths)} tracks ({_elapsed(t_step)})"
             outputs.append(f"{len(stem_paths)} stems")
 
