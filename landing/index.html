@@ -1,1153 +1,742 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAWMASTER — Strip it back. Own the stems.</title>
-  <meta name="description" content="Stem separation, remaster, MIDI extraction and BPM detection. One command. £19 once.">
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="RAWMASTER — Strip it back. Own the stems.">
-  <meta property="og:description" content="Stem separation, remaster, MIDI extraction and BPM detection. One command. £19 once.">
-  <meta property="og:image" content="https://rawmaster.smashd.tools/og.png">
-  <meta property="og:url" content="https://rawmaster.smashd.tools">
-  <meta name="twitter:card" content="summary_large_image">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:       #080808;
-      --bg2:      #111111;
-      --bg3:      #1a1a1a;
-      --border:   #2a2a2a;
-      --red:      #e63012;
-      --red-hot:  #ff3d1a;
-      --text:     #f0ece4;
-      --muted:    #888880;
-      --mono:     'Space Mono', monospace;
-      --sans:     'Inter', sans-serif;
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RAWMASTER - Terminal Precision Audio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "surface-container-highest": "#353534",
+                    "secondary": "#c8c6c5",
+                    "on-primary": "#650900",
+                    "on-secondary-fixed-variant": "#474746",
+                    "on-tertiary-fixed": "#1c1c17",
+                    "error-container": "#93000a",
+                    "on-primary-fixed-variant": "#8f1200",
+                    "primary-fixed-dim": "#ffb4a5",
+                    "outline": "#ad8881",
+                    "on-tertiary": "#31302b",
+                    "tertiary-fixed-dim": "#cac6bf",
+                    "tertiary-fixed": "#e6e2da",
+                    "tertiary": "#cac6bf",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-secondary": "#303030",
+                    "surface-container-lowest": "#0e0e0e",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-container-high": "#2a2a2a",
+                    "inverse-primary": "#bb1a00",
+                    "on-surface": "#e5e2e1",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-tertiary-fixed-variant": "#484741",
+                    "surface-bright": "#3a3939",
+                    "error": "#ffb4ab",
+                    "on-error": "#690005",
+                    "surface-container-low": "#1c1b1b",
+                    "on-error-container": "#ffdad6",
+                    "on-background": "#e5e2e1",
+                    "on-surface-variant": "#e6bdb5",
+                    "surface-variant": "#353534",
+                    "surface-container": "#201f1f",
+                    "on-secondary-container": "#b6b5b4",
+                    "on-tertiary-container": "#2b2a25",
+                    "primary-fixed": "#ffdad3",
+                    "primary": "#ffb4a5",
+                    "on-primary-container": "#590700",
+                    "background": "#131313",
+                    "surface-tint": "#ffb4a5",
+                    "tertiary-container": "#93908a",
+                    "surface-dim": "#131313",
+                    "on-primary-fixed": "#3f0400",
+                    "secondary-container": "#474746",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "surface": "#131313",
+                    "primary-container": "#ff5638",
+                    "inverse-on-surface": "#313030",
+                    "outline-variant": "#5d403a"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+                },
+                "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Space Grotesk"],
+                    "mono": ["Space Mono"]
+                }
+            },
+        },
+    }
+</script>
+<style>
+    html {
+        scroll-behavior: smooth;
+    }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .mono-tight {
+        letter-spacing: -0.05em;
+    }
+    .signal-grid {
+        background-image: radial-gradient(circle, #5d403a 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+    .signal-bar {
+        background: linear-gradient(to top, transparent 2px, currentColor 2px);
+        background-size: 100% 4px;
+    }
+    .signal-meter-step {
+        width: 2px;
+        height: 12px;
+        background: #ff5638;
+        margin-right: 1px;
+    }
+    .signal-meter-dim {
+        background: #353534;
     }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 16px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+    .glass-panel {
+        background: rgba(32, 31, 31, 0.8);
+        backdrop-filter: blur(20px);
     }
-
-    a { color: inherit; text-decoration: none; }
-
-    /* ── NAV ──────────────────────────────── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 40px;
-      background: rgba(8,8,8,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+    details summary {
+        cursor: pointer;
+        list-style: none;
     }
-
-    .nav-logo {
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      color: var(--text);
-    }
-    .nav-logo span { color: var(--red); }
-
-    .nav-links {
-      display: flex; gap: 28px; align-items: center;
-      list-style: none;
-    }
-    .nav-links a {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--text); }
-    .nav-cta {
-      background: var(--red) !important;
-      color: #fff !important;
-      padding: 8px 20px;
-      border-radius: 4px;
-      font-size: 12px !important;
-      font-weight: 700 !important;
-      transition: background 0.2s !important;
-    }
-    .nav-cta:hover { background: var(--red-hot) !important; }
-
-    /* ── HERO ─────────────────────────────── */
-    .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center;
-      padding: 120px 24px 80px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse 60% 40% at 50% 60%, rgba(230,48,18,0.08) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 60% at 20% 20%, rgba(230,48,18,0.04) 0%, transparent 50%);
-      pointer-events: none;
-    }
-
-    .hero-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.25em;
-      color: var(--red);
-      text-transform: uppercase;
-      margin-bottom: 24px;
-      opacity: 0.9;
-    }
-
-    .hero-title {
-      font-family: var(--mono);
-      font-size: clamp(48px, 8vw, 96px);
-      font-weight: 700;
-      line-height: 0.95;
-      letter-spacing: -0.02em;
-      margin-bottom: 8px;
-    }
-
-    .hero-sub {
-      font-family: var(--mono);
-      font-size: clamp(14px, 2vw, 18px);
-      color: var(--muted);
-      letter-spacing: 0.12em;
-      margin-bottom: 32px;
-    }
-
-    .hero-tagline {
-      font-size: clamp(18px, 3vw, 26px);
-      font-weight: 300;
-      color: #ccc;
-      max-width: 620px;
-      margin: 0 auto 12px;
-      line-height: 1.4;
-    }
-
-    .hero-subtext {
-      font-size: 15px;
-      color: var(--muted);
-      margin-bottom: 48px;
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 0.05em;
-    }
-
-    .hero-buttons {
-      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: var(--red);
-      color: #fff;
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 14px 28px;
-      border-radius: 4px;
-      transition: background 0.2s, transform 0.15s;
-    }
-    .btn-primary:hover { background: var(--red-hot); transform: translateY(-1px); }
-
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: transparent;
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      padding: 13px 26px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      transition: border-color 0.2s, color 0.2s, transform 0.15s;
-    }
-    .btn-secondary:hover { border-color: #555; color: #fff; transform: translateY(-1px); }
-
-    .hero-price-note {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-    }
-
-    /* ── TERMINAL DEMO ────────────────────── */
-    .terminal-wrap {
-      width: 100%; max-width: 720px;
-      margin: 60px auto 0;
-    }
-
-    .terminal {
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
-    }
-
-    .terminal-bar {
-      background: #1a1a1a;
-      padding: 10px 16px;
-      display: flex; align-items: center; gap: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .terminal-dot {
-      width: 12px; height: 12px; border-radius: 50%;
-    }
-    .dot-red { background: #ff5f57; }
-    .dot-yellow { background: #febc2e; }
-    .dot-green { background: #28c840; }
-    .terminal-title {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      margin-left: 8px;
-      letter-spacing: 0.05em;
-    }
-
-    .terminal-body {
-      padding: 24px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 2;
-    }
-    .t-prompt { color: var(--red); }
-    .t-cmd { color: #f0ece4; }
-    .t-out { color: #666; }
-    .t-green { color: #5af542; }
-    .t-dim { color: #444; }
-
-    /* ── WHAT YOU GET ─────────────────────── */
-    .section {
-      padding: 100px 24px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .section-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.25em;
-      color: var(--red);
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .section-title {
-      font-family: var(--mono);
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 700;
-      line-height: 1.1;
-      margin-bottom: 20px;
-    }
-
-    .section-sub {
-      font-size: 17px;
-      color: var(--muted);
-      max-width: 560px;
-      margin-bottom: 60px;
-      line-height: 1.7;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .feature {
-      background: var(--bg2);
-      padding: 36px 32px;
-      transition: background 0.2s;
-    }
-    .feature:hover { background: var(--bg3); }
-
-    .feature-icon {
-      font-size: 28px;
-      margin-bottom: 16px;
-      display: block;
-    }
-
-    .feature-title {
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      margin-bottom: 10px;
-      color: var(--text);
-    }
-
-    .feature-desc {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    /* ── PIPELINE ─────────────────────────── */
-    .pipeline-section {
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 100px 24px;
-    }
-
-    .pipeline-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .pipeline-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      margin-top: 50px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .pipeline-step {
-      display: flex; align-items: flex-start; gap: 28px;
-      padding: 32px 36px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      transition: background 0.2s;
-    }
-    .pipeline-step:last-child { border-bottom: none; }
-    .pipeline-step:hover { background: var(--bg3); }
-
-    .step-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--red);
-      letter-spacing: 0.1em;
-      min-width: 36px;
-      padding-top: 3px;
-      font-weight: 700;
-    }
-
-    .step-content {}
-    .step-title {
-      font-family: var(--mono);
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-    .step-desc {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-    .step-tech {
-      display: inline-block;
-      margin-top: 10px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--red);
-      background: rgba(230,48,18,0.1);
-      padding: 3px 10px;
-      border-radius: 3px;
-      letter-spacing: 0.06em;
-    }
-
-    /* ── OUTPUT STRUCTURE ─────────────────── */
-    .output-section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
-
-    .output-tree {
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 32px 36px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 2.2;
-      margin-top: 48px;
-    }
-    .tree-dir { color: #888; }
-    .tree-green { color: #5af542; }
-    .tree-red { color: var(--red); }
-    .tree-blue { color: #79b8ff; }
-    .tree-note { color: #444; font-size: 12px; }
-
-    /* ── PRICING ──────────────────────────── */
-    .pricing-section {
-      padding: 100px 24px;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .pricing-inner { max-width: 1100px; margin: 0 auto; }
-
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-      margin-top: 60px;
-    }
-
-    .pricing-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 40px 36px;
-      display: flex; flex-direction: column;
-      transition: border-color 0.2s, transform 0.2s;
-      position: relative;
-    }
-    .pricing-card:hover { border-color: #444; transform: translateY(-3px); }
-    .pricing-card.featured {
-      border-color: var(--red);
-      background: linear-gradient(135deg, #120a08 0%, var(--bg) 100%);
-    }
-
-    .pricing-badge {
-      position: absolute; top: -12px; left: 32px;
-      background: var(--red);
-      color: #fff;
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 3px 12px;
-      border-radius: 20px;
-      text-transform: uppercase;
-    }
-
-    .pricing-name {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.2em;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .pricing-price {
-      font-family: var(--mono);
-      font-size: 48px;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-    .pricing-price span { font-size: 20px; color: var(--muted); }
-
-    .pricing-once {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      margin-bottom: 28px;
-    }
-
-    .pricing-desc {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 28px;
-      flex: 1;
-    }
-
-    .pricing-features {
-      list-style: none;
-      margin-bottom: 36px;
-    }
-    .pricing-features li {
-      font-size: 14px;
-      color: var(--muted);
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px;
-    }
-    .pricing-features li:last-child { border-bottom: none; }
-    .pricing-features li::before {
-      content: '→';
-      color: var(--red);
-      font-family: var(--mono);
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-
-    .pricing-btn {
-      display: block; text-align: center;
-      background: var(--red);
-      color: #fff;
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 14px 24px;
-      border-radius: 4px;
-      transition: background 0.2s;
-    }
-    .pricing-btn:hover { background: var(--red-hot); }
-    .pricing-btn.outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-    .pricing-btn.outline:hover { border-color: #555; background: var(--bg3); }
-
-    /* ── COMMANDS SECTION ─────────────────── */
-    .commands-section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
-
-    .commands-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 24px;
-      margin-top: 50px;
-    }
-
-    .command-block {
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .command-label {
-      background: var(--bg3);
-      padding: 10px 20px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      border-bottom: 1px solid var(--border);
-    }
-    .command-code {
-      padding: 20px 24px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 2;
-      color: #f0ece4;
-    }
-    .cmd-comment { color: #444; }
-
-    /* ── NO CLOUD ─────────────────────────── */
-    .nocloud-section {
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 80px 24px;
-      text-align: center;
-    }
-    .nocloud-inner { max-width: 680px; margin: 0 auto; }
-    .nocloud-title {
-      font-family: var(--mono);
-      font-size: clamp(22px, 4vw, 36px);
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-    .nocloud-sub {
-      font-size: 16px;
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 40px;
-    }
-    .nocloud-bullets {
-      display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
-    }
-    .nocloud-pill {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text);
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      padding: 8px 18px;
-      border-radius: 20px;
-      letter-spacing: 0.06em;
-    }
-
-    /* ── FOOTER ───────────────────────────── */
-    footer {
-      padding: 48px 40px;
-      border-top: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px;
-    }
-    .footer-logo {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-    }
-    .footer-logo span { color: var(--red); }
-    .footer-copy {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-    }
-    .footer-links {
-      display: flex; gap: 20px; list-style: none;
-    }
-    .footer-links a {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-      transition: color 0.2s;
-    }
-    .footer-links a:hover { color: var(--text); }
-
-    /* ── HAMBURGER ────────────────────────── */
-    .hamburger {
-      display: none;
-      background: none; border: none; cursor: pointer;
-      width: 28px; height: 20px; position: relative;
-      flex-shrink: 0;
-    }
-    .hamburger span {
-      display: block; position: absolute; left: 0; right: 0;
-      height: 2px; background: var(--text);
-      transition: all 0.25s ease;
-    }
-    .hamburger span:nth-child(1) { top: 0; }
-    .hamburger span:nth-child(2) { top: 9px; }
-    .hamburger span:nth-child(3) { top: 18px; }
-    .hamburger.open span:nth-child(1) { top: 9px; transform: rotate(45deg); }
-    .hamburger.open span:nth-child(2) { opacity: 0; }
-    .hamburger.open span:nth-child(3) { top: 9px; transform: rotate(-45deg); }
-
-    /* ── NEW BADGE ────────────────────────── */
-    .feature-badge {
-      position: absolute; top: -10px; right: 16px;
-      background: var(--red); color: #fff;
-      font-family: var(--mono); font-size: 10px; font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 3px 10px; border-radius: 12px;
-    }
-
-    /* ── FAQ ──────────────────────────────── */
-    .faq-section {
-      padding: 100px 24px;
-      max-width: 800px; margin: 0 auto;
-    }
-    .faq-section details {
-      border-bottom: 1px solid var(--border);
-    }
-    .faq-section summary {
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      padding: 20px 0;
-      cursor: pointer;
-      list-style: none;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .faq-section summary::after {
-      content: '+';
-      font-size: 20px; color: var(--muted);
-      transition: transform 0.2s;
-    }
-    .faq-section details[open] summary::after {
-      content: '-';
-    }
-    .faq-section summary::-webkit-details-marker { display: none; }
-    .faq-section .faq-answer {
-      padding: 0 0 20px;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-
-    /* ── COMPARISON TABLE ────────────────── */
-    .comparison-table {
-      width: 100%; border-collapse: collapse;
-      margin-top: 60px;
-      font-family: var(--mono);
-      font-size: 13px;
-    }
-    .comparison-table th, .comparison-table td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-    }
-    .comparison-table th {
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      font-weight: 400;
-    }
-    .comparison-table th.featured-col {
-      color: var(--red); font-weight: 700;
-    }
-    .comparison-table td:first-child {
-      text-align: left; color: var(--muted);
-    }
-    .comparison-table .check { color: var(--red); }
-    .comparison-table .dash { color: #333; }
-
-    /* ── RESPONSIVE ───────────────────────── */
-    @media (max-width: 768px) {
-      nav { padding: 14px 20px; }
-      .hamburger { display: block; }
-      .nav-links {
+    details summary::-webkit-details-marker {
         display: none;
-        position: absolute; top: 100%; left: 0; right: 0;
-        background: rgba(8,8,8,0.98);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid var(--border);
-        flex-direction: column; gap: 0;
-        padding: 0;
-      }
-      .nav-links.open { display: flex; }
-      .nav-links li { border-bottom: 1px solid var(--border); }
-      .nav-links a { display: block; padding: 16px 24px; font-size: 14px; }
-      .nav-cta { border-radius: 0 !important; text-align: center; display: block !important; }
-      .hero { padding: 100px 20px 60px; }
-      .section, .output-section, .commands-section { padding: 70px 20px; }
-      .pipeline-section, .pricing-section { padding: 70px 20px; }
-      .faq-section { padding: 70px 20px; }
-      footer { padding: 32px 20px; flex-direction: column; text-align: center; gap: 20px; }
-      .footer-top { flex-direction: column; gap: 24px; text-align: center; }
-      .pipeline-step { padding: 24px 20px; }
-      .output-tree { padding: 20px; font-size: 12px; }
-      .comparison-table { font-size: 11px; }
-      .comparison-table th, .comparison-table td { padding: 10px 8px; }
     }
-  </style>
+    details[open] summary .faq-chevron {
+        transform: rotate(180deg);
+    }
+</style>
 </head>
-<body>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary">
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">RAW<span>MASTER</span></div>
-  <button class="hamburger" onclick="this.classList.toggle('open');document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <ul class="nav-links">
-    <li><a href="#features" onclick="document.querySelector('.nav-links').classList.remove('open');document.querySelector('.hamburger').classList.remove('open')">Features</a></li>
-    <li><a href="#pipeline" onclick="document.querySelector('.nav-links').classList.remove('open');document.querySelector('.hamburger').classList.remove('open')">Pipeline</a></li>
-    <li><a href="#pricing" onclick="document.querySelector('.nav-links').classList.remove('open');document.querySelector('.hamburger').classList.remove('open')">Pricing</a></li>
-    <li><a href="https://github.com/SICQR/rawmaster" target="_blank">GitHub</a></li>
-    <li><a href="#pricing" class="nav-cta">Get RAWMASTER</a></li>
-  </ul>
-</nav>
-
-<!-- HERO -->
-<section class="hero">
-  <p class="hero-label">Smash Daddys Audio Tools</p>
-  <h1 class="hero-title">RAW<br>MASTER</h1>
-  <p class="hero-sub">Strip it back. Own the stems.</p>
-  <p class="hero-tagline">The stem upgrade Suno charges $22/month for — yours forever.</p>
-  <p class="hero-subtext">HTDemucs · Basic-Pitch · LUFS normalisation · BPM + Key · All local</p>
-  <div class="hero-buttons">
-    <a href="#pricing" class="btn-primary">
-      Get RAWMASTER — from £19
-    </a>
-    <a href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank" class="btn-secondary">
-      Try free demo (90s limit)
-    </a>
-  </div>
-  <p class="hero-price-note">One-time payment. No subscription. No cloud. No account.</p>
-
-  <div class="terminal-wrap">
-    <div class="terminal">
-      <div class="terminal-bar">
-        <div class="terminal-dot dot-red"></div>
-        <div class="terminal-dot dot-yellow"></div>
-        <div class="terminal-dot dot-green"></div>
-        <span class="terminal-title">terminal — rawmaster</span>
-      </div>
-      <div class="terminal-body">
-        <div><span class="t-prompt">❯ </span><span class="t-cmd">rawmaster night_terrace_set.mp3 --stems --midi</span></div>
-        <div class="t-dim">&nbsp;</div>
-        <div class="t-out">  🔍 BPM: 128.0  |  Key: A minor</div>
-        <div class="t-out">  🎛  Remastering night_terrace_set.mp3…</div>
-        <div class="t-green">  ✅ Remaster saved → night_terrace_set_RAWMASTER.wav</div>
-        <div class="t-out">  🥁 Separating stems (htdemucs_ft)…</div>
-        <div class="t-green">  ✅ Stem saved → stems/vocals.wav</div>
-        <div class="t-green">  ✅ Stem saved → stems/drums.wav</div>
-        <div class="t-green">  ✅ Stem saved → stems/bass.wav</div>
-        <div class="t-green">  ✅ Stem saved → stems/other.wav</div>
-        <div class="t-out">  🎹 Extracting MIDI from bass…</div>
-        <div class="t-green">  ✅ MIDI saved → midi/bass.mid</div>
-        <div class="t-dim">&nbsp;</div>
-        <div class="t-green">  🔥 Done. Go make noise.</div>
-      </div>
+<!-- ========== TOP NAVIGATION ========== -->
+<header class="bg-[#131313] w-full top-0 sticky z-50 flex justify-between items-center px-4 md:px-8 py-4 border-b border-outline-variant/10">
+    <div class="flex items-center gap-4">
+        <span class="text-lg md:text-xl font-bold tracking-[0.2em] text-[#ffb4a5] font-headline">RAWMASTER</span>
     </div>
-  </div>
+    <nav class="hidden md:flex gap-6 items-center">
+        <a class="font-headline uppercase tracking-[0.15em] text-xs text-on-surface hover:text-primary transition-colors px-3 py-1" href="#features">FEATURES</a>
+        <a class="font-headline uppercase tracking-[0.15em] text-xs text-on-surface hover:text-primary transition-colors px-3 py-1" href="#faq">FAQ</a>
+        <a class="font-headline uppercase tracking-[0.15em] text-xs text-on-surface hover:text-primary transition-colors px-3 py-1" href="#pricing">PRICING</a>
+        <a class="font-headline uppercase tracking-[0.15em] text-xs text-primary font-bold hover:bg-surface-container-high transition-colors px-4 py-2 border border-primary/20" href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank" rel="noopener">DEMO</a>
+    </nav>
+    <a class="md:hidden font-headline uppercase tracking-[0.15em] text-xs text-primary font-bold px-3 py-2 border border-primary/20" href="#pricing">GET_STARTED</a>
+</header>
+
+<!-- ========== HERO SECTION ========== -->
+<main class="relative overflow-hidden">
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary-container/5 blur-[120px] pointer-events-none rounded-full"></div>
+
+<section class="relative pt-8 md:pt-12 pb-24 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-start">
+    <!-- Label -->
+    <div class="mb-6 md:mb-8">
+        <span class="font-mono text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-primary-container font-bold bg-primary-container/10 px-3 py-1">
+            SMASH DADDYS AUDIO TOOLS
+        </span>
+    </div>
+
+    <!-- Hero Content -->
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div class="lg:col-span-7 flex flex-col space-y-6">
+            <h1 class="font-mono text-[15vw] sm:text-7xl md:text-8xl lg:text-[7rem] font-black leading-[0.85] tracking-tighter text-on-surface break-words">
+                RAW <br class="hidden sm:block"/>MASTER
+            </h1>
+            <div class="space-y-4">
+                <p class="font-headline text-2xl md:text-3xl lg:text-4xl text-on-surface-variant font-light leading-tight">
+                    Strip it back. <span class="text-on-surface font-medium">Own the stems.</span>
+                </p>
+                <p class="max-w-md text-base md:text-lg text-on-surface-variant/80 font-body leading-relaxed">
+                    The stem upgrade Suno charges $22/month for &mdash; <span class="text-primary font-mono">yours forever.</span>
+                </p>
+            </div>
+
+            <!-- Tech Stack -->
+            <div class="flex flex-wrap items-center gap-x-3 md:gap-x-4 gap-y-2 py-4 border-y border-outline-variant/20 max-w-xl">
+                <span class="font-mono text-[10px] tracking-widest text-on-secondary-container">HTDemucs</span>
+                <span class="text-outline-variant/40">&bull;</span>
+                <span class="font-mono text-[10px] tracking-widest text-on-secondary-container">BS-Roformer</span>
+                <span class="text-outline-variant/40">&bull;</span>
+                <span class="font-mono text-[10px] tracking-widest text-on-secondary-container">Basic-Pitch</span>
+                <span class="text-outline-variant/40">&bull;</span>
+                <span class="font-mono text-[10px] tracking-widest text-on-secondary-container">matchering</span>
+                <span class="text-outline-variant/40">&bull;</span>
+                <span class="font-mono text-[10px] tracking-widest text-primary">All local.</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                <a href="#pricing" class="bg-primary-container text-on-primary font-mono text-sm md:text-base font-bold uppercase tracking-widest px-6 md:px-8 py-5 rounded-none hover:bg-primary transition-all active:scale-[0.98] flex items-center justify-between group no-underline">
+                    <span>Get RAWMASTER &mdash; from &pound;19</span>
+                    <span class="material-symbols-outlined ml-4 group-hover:translate-x-1 transition-transform">terminal</span>
+                </a>
+                <a href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank" rel="noopener" class="border border-outline-variant/40 text-on-surface font-mono text-sm md:text-base uppercase tracking-widest px-6 md:px-8 py-5 rounded-none hover:bg-surface-container-high transition-all active:scale-[0.98] text-center no-underline">
+                    Try free demo (90s limit)
+                </a>
+            </div>
+
+            <!-- Trust Signals -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-3 pt-6">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    <span class="font-mono text-[11px] uppercase tracking-tighter text-on-surface-variant">One-time payment</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">block</span>
+                    <span class="font-mono text-[11px] uppercase tracking-tighter text-on-surface-variant">No subscription</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">cloud_off</span>
+                    <span class="font-mono text-[11px] uppercase tracking-tighter text-on-surface-variant">Local Processing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Mockup -->
+        <div class="lg:col-span-5 relative group w-full mt-8 lg:mt-0">
+            <div class="absolute -inset-1 bg-gradient-to-tr from-primary-container/20 to-transparent blur-2xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative bg-surface-container-lowest border border-outline-variant/20 shadow-2xl overflow-hidden">
+                <!-- Terminal Header -->
+                <div class="bg-surface-container flex items-center justify-between px-4 py-2 border-b border-outline-variant/10">
+                    <div class="flex gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-error/40"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-tertiary/40"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-on-surface-variant/20"></div>
+                    </div>
+                    <div class="font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest truncate max-w-[150px] md:max-w-none">rawmaster_v1.0.4 &mdash; session</div>
+                    <div class="w-8"></div>
+                </div>
+                <!-- Terminal Content -->
+                <div class="p-4 md:p-6 font-mono text-[11px] md:text-[12px] leading-relaxed overflow-x-auto">
+                    <div class="flex gap-3 mb-2 whitespace-nowrap">
+                        <span class="text-primary">$</span>
+                        <span class="text-on-surface">rawmaster --input ./suno_gen_01.mp3 --output ./stems</span>
+                    </div>
+                    <div class="text-on-surface-variant/60 mb-2">[INFO] Initializing BS-Roformer Model... DONE</div>
+                    <div class="text-on-surface-variant/60 mb-2">[INFO] Phase Correlation Analysis: 98.4% Accuracy</div>
+                    <div class="my-4 space-y-2">
+                        <div class="flex items-center gap-4">
+                            <span class="w-12 md:w-16 text-primary text-[10px]">DRUMS</span>
+                            <div class="flex-1 h-1.5 bg-surface-container flex gap-0.5">
+                                <div class="w-1/4 h-full bg-primary-container"></div>
+                                <div class="w-1/4 h-full bg-primary-container"></div>
+                                <div class="w-1/4 h-full bg-primary-container/40"></div>
+                                <div class="w-1/4 h-full bg-surface-container-high"></div>
+                            </div>
+                            <span class="text-[10px] text-on-surface w-6">74%</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-12 md:w-16 text-primary text-[10px]">BASS</span>
+                            <div class="flex-1 h-1.5 bg-surface-container flex gap-0.5">
+                                <div class="w-1/4 h-full bg-primary-container"></div>
+                                <div class="w-1/4 h-full bg-primary-container"></div>
+                                <div class="w-1/4 h-full bg-primary-container"></div>
+                                <div class="w-1/4 h-full bg-primary-container/20"></div>
+                            </div>
+                            <span class="text-[10px] text-on-surface w-6">91%</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-12 md:w-16 text-primary text-[10px]">VOCAL</span>
+                            <div class="flex-1 h-1.5 bg-surface-container flex gap-0.5">
+                                <div class="w-1/4 h-full bg-primary-container"></div>
+                                <div class="w-1/4 h-full bg-primary-container/20"></div>
+                                <div class="w-1/4 h-full bg-surface-container-high"></div>
+                                <div class="w-1/4 h-full bg-surface-container-high"></div>
+                            </div>
+                            <span class="text-[10px] text-on-surface w-6">32%</span>
+                        </div>
+                    </div>
+                    <div class="text-tertiary-fixed mb-1">&gt;&gt; EXPORT COMPLETE.</div>
+                    <div class="text-on-surface-variant/60">&gt;&gt; 4 tracks written to /stems/</div>
+                    <div class="mt-4 flex gap-3">
+                        <span class="text-primary">$</span>
+                        <span class="w-2 h-4 bg-primary-container animate-pulse"></span>
+                    </div>
+                </div>
+            </div>
+            <!-- Floating Indicator -->
+            <div class="absolute -bottom-4 md:-bottom-6 -right-2 md:-right-6 bg-surface-container border border-outline-variant/30 p-3 md:p-4 shadow-xl scale-90 md:scale-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-primary-container/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-xl md:text-2xl">memory</span>
+                    </div>
+                    <div>
+                        <div class="text-[9px] md:text-[10px] font-mono uppercase text-on-surface-variant">Local CPU Latency</div>
+                        <div class="text-xs md:text-sm font-mono font-bold text-on-surface">0.02ms</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 
-<!-- FEATURES -->
-<section class="section" id="features">
-  <p class="section-label">What you get</p>
-  <h2 class="section-title">Everything. Local.<br>One command.</h2>
-  <p class="section-sub">No uploads. No API credits. No monthly bill. Everything runs on your machine.</p>
-
-  <div class="features-grid">
-    <div class="feature">
-      <span class="feature-icon">🥁</span>
-      <p class="feature-title">4-STEM SEPARATION</p>
-      <p class="feature-desc">HTDemucs fine-tuned model. Vocals, drums, bass, other — all at 44.1kHz float32 WAV. 6-stem mode adds guitar + piano.</p>
+<!-- Subtle 3-col Feature Row (from Hero) -->
+<section class="border-t border-outline-variant/10 bg-surface-container-lowest/50 py-16 px-6">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div class="space-y-4">
+            <h3 class="font-mono text-sm uppercase tracking-widest text-primary">No Cloud Required</h3>
+            <p class="text-on-surface-variant text-sm leading-relaxed">Processing happens on your GPU. Private by design. No upload limits. No recurring fees.</p>
+        </div>
+        <div class="space-y-4">
+            <h3 class="font-mono text-sm uppercase tracking-widest text-primary">Lossless Extraction</h3>
+            <p class="text-on-surface-variant text-sm leading-relaxed">Uses matchering and BS-Roformer to ensure zero artifacts. High-fidelity stems for professional production.</p>
+        </div>
+        <div class="space-y-4">
+            <h3 class="font-mono text-sm uppercase tracking-widest text-primary">MIDI Conversion</h3>
+            <p class="text-on-surface-variant text-sm leading-relaxed">Built-in Basic-Pitch integration allows you to instantly convert stems into MIDI piano rolls for your DAW.</p>
+        </div>
     </div>
-    <div class="feature">
-      <span class="feature-icon">🎛</span>
-      <p class="feature-title">REMASTER PIPELINE</p>
-      <p class="feature-desc">Spectral gating → LUFS normalisation to −14.0 (streaming standard) → hard limiter at −0.3 dBFS. 24-bit output.</p>
-    </div>
-    <div class="feature" style="position:relative;">
-      <span class="feature-badge">NEW</span>
-      <span class="feature-icon">🎯</span>
-      <p class="feature-title">REFERENCE MASTERING</p>
-      <p class="feature-desc">Drop a reference track and your mix is matched to its EQ curve, loudness, and dynamics. Pro-grade mastering built in — no subscription required.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🎹</span>
-      <p class="feature-title">MIDI EXTRACTION</p>
-      <p class="feature-desc">Basic-Pitch neural MIDI transcription from bass (and optionally vocals). Polyphonic. Export straight into your DAW.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🔍</span>
-      <p class="feature-title">BPM + KEY + CHORDS</p>
-      <p class="feature-desc">Beat tracking, key detection, and full chord progression analysis with timestamps. BPM, key, and chord chart written to output.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">⏩</span>
-      <p class="feature-title">SPEED + PITCH CONTROL</p>
-      <p class="feature-desc">Time-stretch and pitch-shift any audio. Slow down to learn parts, shift key to match your range. Preserves quality.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">📂</span>
-      <p class="feature-title">BATCH MODE</p>
-      <p class="feature-desc">Point it at a folder. Every audio file gets remastered and separated. Walk away, come back to stems.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🔒</span>
-      <p class="feature-title">100% LOCAL</p>
-      <p class="feature-desc">No network requests. No uploads. Your unreleased music never leaves your machine. Models download once, run forever.</p>
-    </div>
-  </div>
 </section>
 
-<!-- PIPELINE -->
-<div class="pipeline-section" id="pipeline">
-  <div class="pipeline-inner">
-    <p class="section-label">How it works</p>
-    <h2 class="section-title">The pipeline,<br>step by step.</h2>
-
-    <div class="pipeline-steps">
-      <div class="pipeline-step">
-        <span class="step-num">01</span>
-        <div class="step-content">
-          <p class="step-title">Load + Resample</p>
-          <p class="step-desc">Audio loaded at 44100 Hz, converted to float32. Supports MP3, WAV, FLAC, AIFF, OGG, M4A.</p>
-        </div>
-      </div>
-      <div class="pipeline-step">
-        <span class="step-num">02</span>
-        <div class="step-content">
-          <p class="step-title">Spectral Gating</p>
-          <p class="step-desc">Non-stationary noise reduction via noisereduce. prop_decrease=0.6 — aggressive enough to kill shimmer and hiss, safe enough to preserve transients and low-end.</p>
-          <span class="step-tech">noisereduce</span>
-        </div>
-      </div>
-      <div class="pipeline-step">
-        <span class="step-num">03</span>
-        <div class="step-content">
-          <p class="step-title">LUFS Normalisation</p>
-          <p class="step-desc">Integrated loudness measured and normalised to −14.0 LUFS. The streaming standard: Spotify, Apple Music, YouTube.</p>
-          <span class="step-tech">pyloudnorm</span>
-        </div>
-      </div>
-      <div class="pipeline-step">
-        <span class="step-num">04</span>
-        <div class="step-content">
-          <p class="step-title">Hard Limiter</p>
-          <p class="step-desc">Peak ceiling at −0.3 dBFS. Clean, ISP-safe output with no inter-sample distortion.</p>
-        </div>
-      </div>
-      <div class="pipeline-step">
-        <span class="step-num">04b</span>
-        <div class="step-content">
-          <p class="step-title">Reference Mastering (optional)</p>
-          <p class="step-desc">When a reference track is provided via --ref, spectral profile, loudness, and dynamics are matched to the reference. Replaces the fixed LUFS + limiter chain.</p>
-          <span class="step-tech">matchering</span>
-        </div>
-      </div>
-      <div class="pipeline-step">
-        <span class="step-num">05</span>
-        <div class="step-content">
-          <p class="step-title">Stem Separation</p>
-          <p class="step-desc">HTDemucs fine-tuned model with 2 shifts and 0.25 overlap. Best-in-class open-source separation. Runs on CPU or GPU.</p>
-          <span class="step-tech">htdemucs_ft</span>
-        </div>
-      </div>
-      <div class="pipeline-step">
-        <span class="step-num">06</span>
-        <div class="step-content">
-          <p class="step-title">MIDI Extraction</p>
-          <p class="step-desc">Spotify's Basic-Pitch model converts bass stem to polyphonic MIDI. Note activations at frame level — accurate, expressive output.</p>
-          <span class="step-tech">basic-pitch</span>
-        </div>
-      </div>
+<!-- ========== FEATURES GRID ========== -->
+<section id="features" class="py-20 px-6 max-w-7xl mx-auto">
+    <!-- Section Header -->
+    <div class="mb-12 md:mb-16">
+        <p class="font-mono text-primary-container text-[10px] md:text-xs tracking-widest mb-4">SYSTEM_CAPABILITIES_MANIFEST v2.4</p>
+        <h2 class="font-headline font-bold text-3xl sm:text-4xl md:text-6xl uppercase tracking-[0.15em] mb-6 leading-tight">Technical <br/>Specifications</h2>
+        <div class="w-16 h-1 bg-primary-container"></div>
     </div>
-  </div>
-</div>
 
-<!-- OUTPUT STRUCTURE -->
-<section class="output-section">
-  <p class="section-label">Output</p>
-  <h2 class="section-title">Clean structure.<br>Every time.</h2>
+    <!-- Bento Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 1. 4-STEM SEPARATION -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">splitscreen</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_01</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">4-STEM SEPARATION</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">High-fidelity HTDemucs architecture for surgical isolation of vocals, drums, bass, and other elements.</p>
+            </div>
+            <div class="flex gap-1 h-8 items-end text-primary-container mt-auto">
+                <div class="w-1 h-[40%] signal-bar"></div>
+                <div class="w-1 h-[70%] signal-bar"></div>
+                <div class="w-1 h-[50%] signal-bar"></div>
+                <div class="w-1 h-[90%] signal-bar"></div>
+            </div>
+        </div>
 
-  <div class="output-tree">
-    <div class="tree-dir">rawmaster_output/</div>
-    <div class="tree-dir">└── night_terrace_set/</div>
-    <div><span class="tree-dir">    ├── </span><span class="tree-green">night_terrace_set_RAWMASTER.wav</span><span class="tree-note">  ← 24-bit, −14 LUFS</span></div>
-    <div><span class="tree-dir">    ├── </span><span class="tree-blue">info.txt</span><span class="tree-note">                          ← BPM: 128.0 | Key: A minor</span></div>
-    <div><span class="tree-dir">    ├── stems/</span></div>
-    <div><span class="tree-dir">    │   ├── </span><span class="tree-green">vocals.wav</span></div>
-    <div><span class="tree-dir">    │   ├── </span><span class="tree-green">drums.wav</span></div>
-    <div><span class="tree-dir">    │   ├── </span><span class="tree-green">bass.wav</span></div>
-    <div><span class="tree-dir">    │   └── </span><span class="tree-green">other.wav</span></div>
-    <div><span class="tree-dir">    └── midi/</span></div>
-    <div><span class="tree-dir">        └── </span><span class="tree-red">bass.mid</span><span class="tree-note">                          ← polyphonic MIDI</span></div>
-  </div>
+        <!-- 2. REMASTER PIPELINE -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">equalizer</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_02</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">REMASTER PIPELINE</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Spectral gating, LUFS normalization, and ceiling-limited brickwall output for commercial standards.</p>
+            </div>
+            <div class="bg-surface-container-high h-1 w-full rounded-none overflow-hidden mt-auto">
+                <div class="bg-primary h-full w-2/3"></div>
+            </div>
+        </div>
+
+        <!-- 3. REFERENCE MASTERING -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-primary-container/20 group hover:bg-surface-container transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+            <div class="absolute top-0 right-0 bg-primary-container text-on-primary px-3 py-1 font-mono text-[10px] tracking-tighter">NEW_BUILD</div>
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">target</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_03</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">REFERENCE MASTERING</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Advanced sonic fingerprinting to match EQ curves and perceived loudness to any professional reference track.</p>
+            </div>
+        </div>
+
+        <!-- 4. MIDI EXTRACTION -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">piano</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_04</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">MIDI EXTRACTION</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Transform polyphonic audio into editable MIDI data. Optimized for basslines and lead vocal melodies.</p>
+            </div>
+        </div>
+
+        <!-- 5. BPM + KEY + CHORDS -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">search</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_05</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">BPM + KEY + CHORDS</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Neural beat tracking and harmonic analysis with real-time timestamped chord progression generation.</p>
+            </div>
+            <div class="flex flex-wrap gap-2 font-mono text-[10px] mt-auto">
+                <span class="bg-surface-container px-2 py-1 border border-outline-variant/20 whitespace-nowrap">128 BPM</span>
+                <span class="bg-surface-container px-2 py-1 border border-outline-variant/20 whitespace-nowrap">C# MINOR</span>
+            </div>
+        </div>
+
+        <!-- 6. SPEED + PITCH CONTROL -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">speed</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_06</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">SPEED + PITCH CONTROL</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Phase-locked time-stretching and granular pitch-shifting without sonic artifacts or spectral smearing.</p>
+            </div>
+        </div>
+
+        <!-- 7. BATCH MODE -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">folder_copy</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_07</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">BATCH MODE</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Parallel processing architecture allows for entire libraries to be stems-extracted or mastered simultaneously.</p>
+            </div>
+        </div>
+
+        <!-- 8. 100% LOCAL -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-outline-variant/10 group hover:bg-surface-container transition-all duration-300 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">lock</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_08</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">100% LOCAL</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Privacy-first execution. No data ever leaves your hardware. Zero latency, zero cloud, zero subscriptions.</p>
+            </div>
+        </div>
+
+        <!-- 9. 12-STEM MAX MODE -->
+        <div class="bg-surface-container-lowest p-6 md:p-8 border border-primary/30 group hover:bg-surface-container-high transition-all duration-300 relative flex flex-col h-full">
+            <div class="flex justify-between items-start mb-10 md:mb-12">
+                <span class="material-symbols-outlined text-primary text-3xl md:text-4xl">rocket_launch</span>
+                <span class="font-mono text-[10px] text-on-surface-variant opacity-50 shrink-0">MOD_09</span>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-headline font-bold text-lg md:text-xl uppercase tracking-wider mb-2">12-STEM MAX MODE</h3>
+                <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Elite separation: lead vocals, backing vocals, kick, snare, cymbals, percussion, synths, and FX modules.</p>
+            </div>
+            <div class="mt-auto pt-4 grid grid-cols-4 gap-1">
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+                <div class="h-1 bg-primary"></div>
+            </div>
+        </div>
+    </div>
 </section>
 
-<!-- COMMANDS -->
-<section class="commands-section">
-  <p class="section-label">CLI Reference</p>
-  <h2 class="section-title">One tool.<br>Every job.</h2>
+<!-- ========== FAQ SECTION ========== -->
+<section id="faq" class="py-20 px-6 border-t border-outline-variant/10">
+    <div class="max-w-3xl mx-auto">
+        <div class="mb-12">
+            <p class="font-mono text-primary-container text-[10px] md:text-xs tracking-widest mb-4">SUPPORT_KNOWLEDGE_BASE</p>
+            <h2 class="font-headline font-bold text-3xl sm:text-4xl md:text-5xl uppercase tracking-[0.15em] mb-6 leading-tight">Frequently Asked<br/>Questions</h2>
+            <div class="w-16 h-1 bg-primary-container"></div>
+        </div>
 
-  <div class="commands-grid">
-    <div class="command-block">
-      <div class="command-label">BASIC</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> track.mp3</div>
-        <div class="cmd-comment"># remaster only</div>
-      </div>
+        <div class="space-y-4">
+            <!-- FAQ 1 -->
+            <details class="bg-surface-container-lowest border border-outline-variant/10 group">
+                <summary class="flex items-center justify-between p-6 hover:bg-surface-container transition-colors">
+                    <span class="font-headline font-bold text-sm md:text-base uppercase tracking-wider text-on-surface pr-4">How long does processing take?</span>
+                    <span class="material-symbols-outlined text-primary faq-chevron transition-transform duration-200 shrink-0">expand_more</span>
+                </summary>
+                <div class="px-6 pb-6 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/10 pt-4">
+                    BPM/key detection takes approximately 5 seconds. Remastering runs in around 10 seconds. Stem separation takes 5-15 minutes on CPU or 1-3 minutes with a GPU. MIDI extraction completes in roughly 10 seconds.
+                </div>
+            </details>
+
+            <!-- FAQ 2 -->
+            <details class="bg-surface-container-lowest border border-outline-variant/10 group">
+                <summary class="flex items-center justify-between p-6 hover:bg-surface-container transition-colors">
+                    <span class="font-headline font-bold text-sm md:text-base uppercase tracking-wider text-on-surface pr-4">What are the system requirements?</span>
+                    <span class="material-symbols-outlined text-primary faq-chevron transition-transform duration-200 shrink-0">expand_more</span>
+                </summary>
+                <div class="px-6 pb-6 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/10 pt-4">
+                    Python 3.9+, macOS/Windows/Linux, approximately 1GB disk space. GPU is optional but recommended for faster stem separation. 8GB RAM recommended.
+                </div>
+            </details>
+
+            <!-- FAQ 3 -->
+            <details class="bg-surface-container-lowest border border-outline-variant/10 group">
+                <summary class="flex items-center justify-between p-6 hover:bg-surface-container transition-colors">
+                    <span class="font-headline font-bold text-sm md:text-base uppercase tracking-wider text-on-surface pr-4">What does reference mastering do?</span>
+                    <span class="material-symbols-outlined text-primary faq-chevron transition-transform duration-200 shrink-0">expand_more</span>
+                </summary>
+                <div class="px-6 pb-6 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/10 pt-4">
+                    Matches EQ, loudness, and dynamics to a professional reference track of your choosing. Runs entirely locally and costs nothing after purchase.
+                </div>
+            </details>
+
+            <!-- FAQ 4 -->
+            <details class="bg-surface-container-lowest border border-outline-variant/10 group">
+                <summary class="flex items-center justify-between p-6 hover:bg-surface-container transition-colors">
+                    <span class="font-headline font-bold text-sm md:text-base uppercase tracking-wider text-on-surface pr-4">Can I use outputs commercially?</span>
+                    <span class="material-symbols-outlined text-primary faq-chevron transition-transform duration-200 shrink-0">expand_more</span>
+                </summary>
+                <div class="px-6 pb-6 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/10 pt-4">
+                    Yes. Your license, your outputs.
+                </div>
+            </details>
+
+            <!-- FAQ 5 -->
+            <details class="bg-surface-container-lowest border border-outline-variant/10 group">
+                <summary class="flex items-center justify-between p-6 hover:bg-surface-container transition-colors">
+                    <span class="font-headline font-bold text-sm md:text-base uppercase tracking-wider text-on-surface pr-4">What audio formats are supported?</span>
+                    <span class="material-symbols-outlined text-primary faq-chevron transition-transform duration-200 shrink-0">expand_more</span>
+                </summary>
+                <div class="px-6 pb-6 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/10 pt-4">
+                    MP3, WAV, FLAC, AIFF, OGG, and M4A. Output is 24-bit WAV at 44.1kHz.
+                </div>
+            </details>
+
+            <!-- FAQ 6 -->
+            <details class="bg-surface-container-lowest border border-outline-variant/10 group">
+                <summary class="flex items-center justify-between p-6 hover:bg-surface-container transition-colors">
+                    <span class="font-headline font-bold text-sm md:text-base uppercase tracking-wider text-on-surface pr-4">What's the refund policy?</span>
+                    <span class="material-symbols-outlined text-primary faq-chevron transition-transform duration-200 shrink-0">expand_more</span>
+                </summary>
+                <div class="px-6 pb-6 text-on-surface-variant text-sm leading-relaxed border-t border-outline-variant/10 pt-4">
+                    Gumroad 30-day refund policy.
+                </div>
+            </details>
+        </div>
     </div>
-    <div class="command-block">
-      <div class="command-label">STEMS</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> track.mp3 --stems</div>
-        <div class="cmd-comment"># remaster + 4 stems</div>
-      </div>
-    </div>
-    <div class="command-block">
-      <div class="command-label">STEMS + MIDI</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> track.mp3 --stems --midi</div>
-        <div class="cmd-comment"># + MIDI from bass stem</div>
-      </div>
-    </div>
-    <div class="command-block">
-      <div class="command-label">6-STEM MODE</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> track.mp3 --stems 6</div>
-        <div class="cmd-comment"># adds guitar + piano</div>
-      </div>
-    </div>
-    <div class="command-block">
-      <div class="command-label">BATCH</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> ./folder/ --stems</div>
-        <div class="cmd-comment"># process whole folder</div>
-      </div>
-    </div>
-    <div class="command-block">
-      <div class="command-label">REFERENCE MASTER</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> track.mp3 --ref pro_mix.wav</div>
-        <div class="cmd-comment"># match EQ + loudness to reference</div>
-      </div>
-    </div>
-    <div class="command-block">
-      <div class="command-label">INFO ONLY</div>
-      <div class="command-code">
-        <div><span style="color:#e63012">rawmaster</span> track.mp3 --info</div>
-        <div class="cmd-comment"># BPM + key, no processing</div>
-      </div>
-    </div>
-  </div>
 </section>
 
-<!-- NO CLOUD -->
-<div class="nocloud-section">
-  <div class="nocloud-inner">
-    <h2 class="nocloud-title">Your music stays on<br>your machine.</h2>
-    <p class="nocloud-sub">No uploads. No account. No API credits. Models download once, run forever. Your unreleased tracks are yours — and yours alone.</p>
-    <div class="nocloud-bullets">
-      <span class="nocloud-pill">No cloud processing</span>
-      <span class="nocloud-pill">No subscription</span>
-      <span class="nocloud-pill">No internet after setup</span>
-      <span class="nocloud-pill">macOS + Windows + Linux</span>
-      <span class="nocloud-pill">CPU + GPU</span>
+<!-- ========== PRICING SECTION ========== -->
+<section id="pricing" class="py-20 px-4 max-w-5xl mx-auto border-t border-outline-variant/10">
+    <!-- Header -->
+    <div class="mb-12 text-center md:text-left md:flex md:items-end md:justify-between border-l-2 border-primary pl-6 py-4">
+        <div class="w-full">
+            <h2 class="font-mono font-bold uppercase tracking-widest text-on-background mb-4 text-2xl md:text-4xl">
+                CHOOSE_YOUR_LICENSE
+            </h2>
+            <p class="font-body text-on-surface-variant max-w-xl mx-auto md:mx-0 uppercase tracking-tight text-sm leading-relaxed">
+                Professional grade DSP tools. No cloud dependency. No recurring fees. Permanent activation.
+            </p>
+        </div>
+        <div class="hidden md:flex gap-1 items-end pb-1 shrink-0">
+            <div class="signal-meter-step"></div>
+            <div class="signal-meter-step"></div>
+            <div class="signal-meter-step"></div>
+            <div class="signal-meter-step"></div>
+            <div class="signal-meter-step"></div>
+            <div class="signal-meter-step"></div>
+            <div class="signal-meter-step signal-meter-dim"></div>
+            <div class="signal-meter-step signal-meter-dim"></div>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- FAQ -->
-<section class="faq-section" id="faq">
-  <p class="section-label">FAQ</p>
-  <h2 class="section-title">Questions.<br>Answered.</h2>
+    <!-- No Subscription Banner -->
+    <div class="mb-12 bg-surface-container-lowest border border-outline-variant/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+            <span class="material-symbols-outlined text-primary text-3xl">verified</span>
+            <div>
+                <h3 class="font-headline font-bold uppercase text-xs tracking-widest text-primary">Zero Subscription Model</h3>
+                <p class="text-[10px] md:text-xs text-on-surface-variant font-mono mt-1">ONE-TIME_PURCHASE // LIFETIME_UPDATES_V1.X</p>
+            </div>
+        </div>
+        <div class="font-mono text-[10px] text-outline opacity-40">0XFF_AUTH_SUCCESS</div>
+    </div>
 
-  <details>
-    <summary>How long does processing take?</summary>
-    <p class="faq-answer">BPM + key detection: ~5 seconds. Remastering: ~10 seconds. Stem separation: 5-15 minutes on CPU, 1-3 minutes with a GPU. MIDI extraction: ~10 seconds. Total for a full run on CPU: around 10-20 minutes per track.</p>
-  </details>
+    <!-- Pricing Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+        <!-- CLI Card -->
+        <div class="bg-surface-container border border-outline-variant/10 p-6 md:p-8 flex flex-col justify-between hover:bg-surface-container-high transition-colors group">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="font-mono text-xs tracking-tighter text-on-surface-variant">LVL_01</span>
+                    <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">terminal</span>
+                </div>
+                <h3 class="font-headline font-extrabold text-2xl mb-2 tracking-tight">CLI</h3>
+                <p class="text-xs text-on-surface-variant mb-6 uppercase tracking-widest font-medium">Terminal Power Users</p>
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Stem separation</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Remaster engine</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">MIDI generation</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Chords analysis</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="text-4xl font-mono font-bold mb-6">&pound;19</div>
+                <a href="https://scanme2.gumroad.com/l/rawmaster-cli" target="_blank" rel="noopener" class="block w-full bg-surface-container-highest text-on-surface font-headline uppercase text-xs tracking-[0.2em] py-4 rounded-none border border-outline-variant/30 hover:bg-primary hover:text-on-primary transition-all text-center no-underline">
+                    INITIALIZE_DL
+                </a>
+            </div>
+        </div>
 
-  <details>
-    <summary>What are the system requirements?</summary>
-    <p class="faq-answer">Python 3.9+, macOS (Intel or Apple Silicon), Windows, or Linux. ~1GB disk space for AI models (downloaded once on first run). GPU is optional but speeds up stem separation significantly. 8GB RAM recommended.</p>
-  </details>
+        <!-- DESKTOP Card -->
+        <div class="relative bg-surface-container-high border-2 border-primary/50 p-6 md:p-8 flex flex-col justify-between overflow-hidden">
+            <div class="absolute top-0 right-0 bg-primary text-on-primary font-mono text-[9px] px-3 py-1 tracking-widest uppercase">MOST_POPULAR</div>
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="font-mono text-xs tracking-tighter text-primary">LVL_02</span>
+                    <span class="material-symbols-outlined text-primary">desktop_windows</span>
+                </div>
+                <h3 class="font-headline font-extrabold text-2xl mb-2 tracking-tight">DESKTOP</h3>
+                <p class="text-xs text-on-surface-variant mb-6 uppercase tracking-widest font-medium">Drag-and-drop UI</p>
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center gap-2 text-sm font-bold text-primary">
+                        <span class="material-symbols-outlined text-[16px] shrink-0">add</span>
+                        <span class="font-body uppercase tracking-tighter">Everything in CLI</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Native GUI application</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Batch Mode processing</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Real-time visualization</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="text-4xl font-mono font-bold mb-6">&pound;29</div>
+                <a href="https://scanme2.gumroad.com/l/rawmaster" target="_blank" rel="noopener" class="block w-full bg-primary text-on-primary font-headline uppercase text-xs tracking-[0.2em] py-4 rounded-none shadow-[0_0_20px_rgba(255,180,165,0.2)] active:scale-95 transition-transform text-center no-underline">
+                    DEPLOY_STUDIO
+                </a>
+            </div>
+        </div>
 
-  <details>
-    <summary>What does reference mastering do?</summary>
-    <p class="faq-answer">Upload any professionally mastered track as a reference. RAWMASTER analyses its spectral profile (EQ curve), loudness, and dynamics — then matches your track to sound like it. This is what cloud mastering services charge monthly subscriptions for, but RAWMASTER runs locally and costs nothing after purchase.</p>
-  </details>
+        <!-- TOOLKIT Card -->
+        <div class="bg-surface-container border border-outline-variant/10 p-6 md:p-8 flex flex-col justify-between hover:bg-surface-container-high transition-colors group">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="font-mono text-xs tracking-tighter text-on-surface-variant">LVL_03</span>
+                    <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">settings_input_component</span>
+                </div>
+                <h3 class="font-headline font-extrabold text-2xl mb-2 tracking-tight">TOOLKIT</h3>
+                <p class="text-xs text-on-surface-variant mb-6 uppercase tracking-widest font-medium">RAWMASTER + GRANULE</p>
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Full RAWMASTER Suite</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">GRANULE Reverb Plugin</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">VST3 / AU Support</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+                        <span class="font-body">Priority Support channel</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="text-4xl font-mono font-bold mb-6">&pound;39</div>
+                <a href="https://scanme2.gumroad.com/l/rawmaster-bundle" target="_blank" rel="noopener" class="block w-full bg-surface-container-highest text-on-surface font-headline uppercase text-xs tracking-[0.2em] py-4 rounded-none border border-outline-variant/30 hover:bg-primary hover:text-on-primary transition-all text-center no-underline">
+                    UPGRADE_STATION
+                </a>
+            </div>
+        </div>
+    </div>
 
-  <details>
-    <summary>Can I use the outputs commercially?</summary>
-    <p class="faq-answer">Yes. Your license, your outputs. Stems, remasters, and MIDI files are yours to use in released music, remixes, samples, or any commercial project.</p>
-  </details>
-
-  <details>
-    <summary>What audio formats are supported?</summary>
-    <p class="faq-answer">MP3, WAV, FLAC, AIFF, OGG, and M4A. Output is always 24-bit WAV at 44.1kHz.</p>
-  </details>
-
-  <details>
-    <summary>What's the refund policy?</summary>
-    <p class="faq-answer">Gumroad's standard 30-day refund policy applies. If RAWMASTER doesn't work for you, request a refund through your Gumroad receipt.</p>
-  </details>
+    <!-- Technical Comparison Table -->
+    <section class="mb-8">
+        <h3 class="font-mono text-lg uppercase tracking-[0.3em] mb-8 text-on-surface-variant border-b border-outline-variant/20 pb-4">
+            TECHNICAL_SPECS
+        </h3>
+        <div class="overflow-x-auto -mx-4 px-4">
+            <table class="w-full border-collapse font-mono text-[11px] uppercase tracking-wider min-w-[500px]">
+                <thead>
+                    <tr class="text-on-surface-variant text-left border-b border-outline-variant/10">
+                        <th class="py-4 font-medium">FEATURE_SET</th>
+                        <th class="py-4 px-4 font-medium text-center">CLI</th>
+                        <th class="py-4 px-4 font-medium text-center text-primary">DESKTOP</th>
+                        <th class="py-4 px-4 font-medium text-center">TOOLKIT</th>
+                    </tr>
+                </thead>
+                <tbody class="text-on-surface">
+                    <tr class="border-b border-outline-variant/5">
+                        <td class="py-5">THREADING_OP</td>
+                        <td class="text-center py-5">SINGLE</td>
+                        <td class="text-center py-5">MULTI</td>
+                        <td class="text-center py-5">UNLIMITED</td>
+                    </tr>
+                    <tr class="border-b border-outline-variant/5">
+                        <td class="py-5">DSP_ENGINE</td>
+                        <td class="text-center py-5">CORE_V1</td>
+                        <td class="text-center py-5">CORE_V1</td>
+                        <td class="text-center py-5">CORE_ULTRA</td>
+                    </tr>
+                    <tr class="border-b border-outline-variant/5">
+                        <td class="py-5">LATENCY_COMP</td>
+                        <td class="text-center py-5">MANUAL</td>
+                        <td class="text-center py-5">AUTO</td>
+                        <td class="text-center py-5">AUTO</td>
+                    </tr>
+                    <tr>
+                        <td class="py-5">OFFLINE_AUTH</td>
+                        <td class="text-center py-5 text-primary"><span class="material-symbols-outlined text-sm">check</span></td>
+                        <td class="text-center py-5 text-primary"><span class="material-symbols-outlined text-sm">check</span></td>
+                        <td class="text-center py-5 text-primary"><span class="material-symbols-outlined text-sm">check</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </section>
+</main>
 
-<!-- PRICING -->
-<div class="pricing-section" id="pricing">
-  <div class="pricing-inner">
-    <p class="section-label">Pricing</p>
-    <h2 class="section-title">Pay once.<br>Own it forever.</h2>
-    <p class="section-sub" style="margin-bottom:0">No monthly fee. No usage limits. No expiry. One license, one machine.</p>
-
-    <div class="pricing-grid">
-
-      <!-- CLI -->
-      <div class="pricing-card">
-        <p class="pricing-name">CLI</p>
-        <p class="pricing-price">£19<span></span></p>
-        <p class="pricing-once">ONE-TIME · NO SUBSCRIPTION</p>
-        <p class="pricing-desc">The full pipeline in your terminal. Best for producers who live in the command line.</p>
-        <ul class="pricing-features">
-          <li>4-stem HTDemucs separation</li>
-          <li>Remaster pipeline (LUFS + limiter)</li>
-          <li>MIDI extraction (bass + vocals)</li>
-          <li>BPM + key detection</li>
-          <li>Batch mode</li>
-          <li>macOS + Windows</li>
-        </ul>
-        <a href="https://scanme2.gumroad.com/l/rawmaster-cli" target="_blank" class="pricing-btn outline">Download CLI</a>
-      </div>
-
-      <!-- DESKTOP — featured -->
-      <div class="pricing-card featured">
-        <div class="pricing-badge">MOST POPULAR</div>
-        <p class="pricing-name">DESKTOP</p>
-        <p class="pricing-price">£29<span></span></p>
-        <p class="pricing-once">ONE-TIME · NO SUBSCRIPTION</p>
-        <p class="pricing-desc">Drag, drop, download. Same pipeline with a browser-based visual interface — no terminal required.</p>
-        <ul class="pricing-features">
-          <li>Everything in CLI</li>
-          <li>Drag-and-drop browser UI</li>
-          <li>In-browser audio playback</li>
-          <li>One-click stems + MIDI ZIP</li>
-          <li>Visual progress indicator</li>
-          <li>macOS + Windows + Linux</li>
-        </ul>
-        <a href="https://scanme2.gumroad.com/l/rawmaster" target="_blank" class="pricing-btn">Download Desktop</a>
-      </div>
-
-      <!-- BUNDLE -->
-      <div class="pricing-card">
-        <p class="pricing-name">TOOLKIT</p>
-        <p class="pricing-price">£39<span></span></p>
-        <p class="pricing-once">ONE-TIME · £44 VALUE</p>
-        <p class="pricing-desc">RAWMASTER Desktop + GRANULE (granular reverb browser plugin). Both Smash Daddys tools.</p>
-        <ul class="pricing-features">
-          <li>RAWMASTER Desktop (£29)</li>
-          <li>GRANULE reverb plugin (£15)</li>
-          <li>Save £5 on the bundle</li>
-        </ul>
-        <a href="https://scanme2.gumroad.com/l/rawmaster-bundle" target="_blank" class="pricing-btn outline">Get Toolkit</a>
-      </div>
-
+<!-- ========== FOOTER ========== -->
+<footer class="bg-[#0e0e0e] w-full border-t border-outline-variant/20 px-6 md:px-12 py-12">
+    <div class="max-w-5xl mx-auto flex flex-col gap-8">
+        <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-6">
+            <div>
+                <span class="text-lg font-bold text-on-surface font-headline tracking-[0.15em] uppercase">RAWMASTER</span>
+                <p class="font-headline uppercase tracking-widest text-[10px] text-primary-container mt-1">&copy; 2026 Smash Daddys / Raw Convict Records</p>
+            </div>
+            <nav class="flex flex-wrap justify-center gap-4 md:gap-6">
+                <a class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/60 hover:text-primary transition-colors" href="/terms.html">TERMS</a>
+                <a class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/60 hover:text-primary transition-colors" href="/privacy.html">PRIVACY</a>
+                <a class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/60 hover:text-primary transition-colors" href="/attributions.html">ATTRIBUTIONS</a>
+                <a class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/60 hover:text-primary transition-colors" href="https://github.com/SICQR/rawmaster" target="_blank" rel="noopener">GITHUB</a>
+                <a class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/60 hover:text-primary transition-colors" href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank" rel="noopener">DEMO</a>
+                <a class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/60 hover:text-primary transition-colors" href="https://scanme2.gumroad.com" target="_blank" rel="noopener">GUMROAD</a>
+            </nav>
+        </div>
     </div>
-
-    <table class="comparison-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>CLI</th>
-          <th class="featured-col">DESKTOP</th>
-          <th>TOOLKIT</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Stem separation (4 + 6)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>Remaster pipeline</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>Reference mastering</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>MIDI extraction</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>BPM + key detection</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>Batch mode</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>Drag-and-drop UI</td><td class="dash">—</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>In-browser playback</td><td class="dash">—</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
-        <tr><td>GRANULE reverb plugin</td><td class="dash">—</td><td class="dash">—</td><td class="check">&#10003;</td></tr>
-        <tr><td>Price</td><td>£19</td><td style="color:var(--red);font-weight:700">£29</td><td>£39</td></tr>
-      </tbody>
-    </table>
-
-  </div>
-</div>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-top" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;width:100%;margin-bottom:20px;">
-    <div class="footer-logo">RAW<span>MASTER</span></div>
-    <ul class="footer-links">
-      <li><a href="#features">Features</a></li>
-      <li><a href="#pipeline">Pipeline</a></li>
-      <li><a href="#pricing">Pricing</a></li>
-      <li><a href="#faq">FAQ</a></li>
-    </ul>
-    <ul class="footer-links">
-      <li><a href="https://github.com/SICQR/rawmaster" target="_blank">GitHub</a></li>
-      <li><a href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank">Demo</a></li>
-      <li><a href="https://scanme2.gumroad.com" target="_blank">Gumroad</a></li>
-    </ul>
-  </div>
-  <ul class="footer-links">
-    <li><a href="/terms.html">Terms</a></li>
-    <li><a href="/privacy.html">Privacy</a></li>
-    <li><a href="/attributions.html">Attributions</a></li>
-  </ul>
-  <p class="footer-copy">© 2026 Smash Daddys / Raw Convict Records</p>
 </footer>
 
 </body>

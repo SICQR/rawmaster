@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAWMASTER — Strip it back. Own the stems.</title>
+  <meta name="description" content="Stem separation, remaster, MIDI extraction and BPM detection. One command. £19 once.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="RAWMASTER — Strip it back. Own the stems.">
+  <meta property="og:description" content="Stem separation, remaster, MIDI extraction and BPM detection. One command. £19 once.">
+  <meta property="og:image" content="https://rawmaster.smashd.tools/og.png">
+  <meta property="og:url" content="https://rawmaster.smashd.tools">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080808;
+      --bg2:      #111111;
+      --bg3:      #1a1a1a;
+      --border:   #2a2a2a;
+      --red:      #e63012;
+      --red-hot:  #ff3d1a;
+      --text:     #f0ece4;
+      --muted:    #888880;
+      --mono:     'Space Mono', monospace;
+      --sans:     'Inter', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── NAV ──────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--text);
+    }
+    .nav-logo span { color: var(--red); }
+
+    .nav-links {
+      display: flex; gap: 28px; align-items: center;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--red) !important;
+      color: #fff !important;
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--red-hot) !important; }
+
+    /* ── HERO ─────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 60%, rgba(230,48,18,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 20% 20%, rgba(230,48,18,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      opacity: 0.9;
+    }
+
+    .hero-title {
+      font-family: var(--mono);
+      font-size: clamp(48px, 8vw, 96px);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .hero-sub {
+      font-family: var(--mono);
+      font-size: clamp(14px, 2vw, 18px);
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin-bottom: 32px;
+    }
+
+    .hero-tagline {
+      font-size: clamp(18px, 3vw, 26px);
+      font-weight: 300;
+      color: #ccc;
+      max-width: 620px;
+      margin: 0 auto 12px;
+      line-height: 1.4;
+    }
+
+    .hero-subtext {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 48px;
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    .hero-buttons {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 14px 28px;
+      border-radius: 4px;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { background: var(--red-hot); transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      padding: 13px 26px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-secondary:hover { border-color: #555; color: #fff; transform: translateY(-1px); }
+
+    .hero-price-note {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── TERMINAL DEMO ────────────────────── */
+    .terminal-wrap {
+      width: 100%; max-width: 720px;
+      margin: 60px auto 0;
+    }
+
+    .terminal {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    }
+
+    .terminal-bar {
+      background: #1a1a1a;
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+    .terminal-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .terminal-body {
+      padding: 24px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 2;
+    }
+    .t-prompt { color: var(--red); }
+    .t-cmd { color: #f0ece4; }
+    .t-out { color: #666; }
+    .t-green { color: #5af542; }
+    .t-dim { color: #444; }
+
+    /* ── WHAT YOU GET ─────────────────────── */
+    .section {
+      padding: 100px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .section-sub {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 560px;
+      margin-bottom: 60px;
+      line-height: 1.7;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .feature {
+      background: var(--bg2);
+      padding: 36px 32px;
+      transition: background 0.2s;
+    }
+    .feature:hover { background: var(--bg3); }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .feature-title {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── PIPELINE ─────────────────────────── */
+    .pipeline-section {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 100px 24px;
+    }
+
+    .pipeline-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .pipeline-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 50px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .pipeline-step {
+      display: flex; align-items: flex-start; gap: 28px;
+      padding: 32px 36px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .pipeline-step:last-child { border-bottom: none; }
+    .pipeline-step:hover { background: var(--bg3); }
+
+    .step-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--red);
+      letter-spacing: 0.1em;
+      min-width: 36px;
+      padding-top: 3px;
+      font-weight: 700;
+    }
+
+    .step-content {}
+    .step-title {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .step-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .step-tech {
+      display: inline-block;
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--red);
+      background: rgba(230,48,18,0.1);
+      padding: 3px 10px;
+      border-radius: 3px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── OUTPUT STRUCTURE ─────────────────── */
+    .output-section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
+
+    .output-tree {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px 36px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 2.2;
+      margin-top: 48px;
+    }
+    .tree-dir { color: #888; }
+    .tree-green { color: #5af542; }
+    .tree-red { color: var(--red); }
+    .tree-blue { color: #79b8ff; }
+    .tree-note { color: #444; font-size: 12px; }
+
+    /* ── PRICING ──────────────────────────── */
+    .pricing-section {
+      padding: 100px 24px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .pricing-inner { max-width: 1100px; margin: 0 auto; }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .pricing-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 40px 36px;
+      display: flex; flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .pricing-card:hover { border-color: #444; transform: translateY(-3px); }
+    .pricing-card.featured {
+      border-color: var(--red);
+      background: linear-gradient(135deg, #120a08 0%, var(--bg) 100%);
+    }
+
+    .pricing-badge {
+      position: absolute; top: -12px; left: 32px;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 3px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .pricing-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .pricing-price {
+      font-family: var(--mono);
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .pricing-price span { font-size: 20px; color: var(--muted); }
+
+    .pricing-once {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 28px;
+    }
+
+    .pricing-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+      flex: 1;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 36px;
+    }
+    .pricing-features li {
+      font-size: 14px;
+      color: var(--muted);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pricing-features li:last-child { border-bottom: none; }
+    .pricing-features li::before {
+      content: '→';
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .pricing-btn {
+      display: block; text-align: center;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 14px 24px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .pricing-btn:hover { background: var(--red-hot); }
+    .pricing-btn.outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .pricing-btn.outline:hover { border-color: #555; background: var(--bg3); }
+
+    /* ── COMMANDS SECTION ─────────────────── */
+    .commands-section { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
+
+    .commands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-top: 50px;
+    }
+
+    .command-block {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .command-label {
+      background: var(--bg3);
+      padding: 10px 20px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+    }
+    .command-code {
+      padding: 20px 24px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 2;
+      color: #f0ece4;
+    }
+    .cmd-comment { color: #444; }
+
+    /* ── NO CLOUD ─────────────────────────── */
+    .nocloud-section {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .nocloud-inner { max-width: 680px; margin: 0 auto; }
+    .nocloud-title {
+      font-family: var(--mono);
+      font-size: clamp(22px, 4vw, 36px);
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .nocloud-sub {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+    .nocloud-bullets {
+      display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    }
+    .nocloud-pill {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: 20px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── FOOTER ───────────────────────────── */
+    footer {
+      padding: 48px 40px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+    }
+    .footer-logo span { color: var(--red); }
+    .footer-copy {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+    .footer-links {
+      display: flex; gap: 20px; list-style: none;
+    }
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── HAMBURGER ────────────────────────── */
+    .hamburger {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      width: 28px; height: 20px; position: relative;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block; position: absolute; left: 0; right: 0;
+      height: 2px; background: var(--text);
+      transition: all 0.25s ease;
+    }
+    .hamburger span:nth-child(1) { top: 0; }
+    .hamburger span:nth-child(2) { top: 9px; }
+    .hamburger span:nth-child(3) { top: 18px; }
+    .hamburger.open span:nth-child(1) { top: 9px; transform: rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { top: 9px; transform: rotate(-45deg); }
+
+    /* ── NEW BADGE ────────────────────────── */
+    .feature-badge {
+      position: absolute; top: -10px; right: 16px;
+      background: var(--red); color: #fff;
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 3px 10px; border-radius: 12px;
+    }
+
+    /* ── FAQ ──────────────────────────────── */
+    .faq-section {
+      padding: 100px 24px;
+      max-width: 800px; margin: 0 auto;
+    }
+    .faq-section details {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-section summary {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 20px 0;
+      cursor: pointer;
+      list-style: none;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .faq-section summary::after {
+      content: '+';
+      font-size: 20px; color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .faq-section details[open] summary::after {
+      content: '-';
+    }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section .faq-answer {
+      padding: 0 0 20px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── COMPARISON TABLE ────────────────── */
+    .comparison-table {
+      width: 100%; border-collapse: collapse;
+      margin-top: 60px;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .comparison-table th, .comparison-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .comparison-table th {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .comparison-table th.featured-col {
+      color: var(--red); font-weight: 700;
+    }
+    .comparison-table td:first-child {
+      text-align: left; color: var(--muted);
+    }
+    .comparison-table .check { color: var(--red); }
+    .comparison-table .dash { color: #333; }
+
+    /* ── RESPONSIVE ───────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .hamburger { display: block; }
+      .nav-links {
+        display: none;
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: rgba(8,8,8,0.98);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column; gap: 0;
+        padding: 0;
+      }
+      .nav-links.open { display: flex; }
+      .nav-links li { border-bottom: 1px solid var(--border); }
+      .nav-links a { display: block; padding: 16px 24px; font-size: 14px; }
+      .nav-cta { border-radius: 0 !important; text-align: center; display: block !important; }
+      .hero { padding: 100px 20px 60px; }
+      .section, .output-section, .commands-section { padding: 70px 20px; }
+      .pipeline-section, .pricing-section { padding: 70px 20px; }
+      .faq-section { padding: 70px 20px; }
+      footer { padding: 32px 20px; flex-direction: column; text-align: center; gap: 20px; }
+      .footer-top { flex-direction: column; gap: 24px; text-align: center; }
+      .pipeline-step { padding: 24px 20px; }
+      .output-tree { padding: 20px; font-size: 12px; }
+      .comparison-table { font-size: 11px; }
+      .comparison-table th, .comparison-table td { padding: 10px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">RAW<span>MASTER</span></div>
+  <button class="hamburger" onclick="this.classList.toggle('open');document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links">
+    <li><a href="#features" onclick="document.querySelector('.nav-links').classList.remove('open');document.querySelector('.hamburger').classList.remove('open')">Features</a></li>
+    <li><a href="#pipeline" onclick="document.querySelector('.nav-links').classList.remove('open');document.querySelector('.hamburger').classList.remove('open')">Pipeline</a></li>
+    <li><a href="#pricing" onclick="document.querySelector('.nav-links').classList.remove('open');document.querySelector('.hamburger').classList.remove('open')">Pricing</a></li>
+    <li><a href="https://github.com/SICQR/rawmaster" target="_blank">GitHub</a></li>
+    <li><a href="#pricing" class="nav-cta">Get RAWMASTER</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-label">Smash Daddys Audio Tools</p>
+  <h1 class="hero-title">RAW<br>MASTER</h1>
+  <p class="hero-sub">Strip it back. Own the stems.</p>
+  <p class="hero-tagline">The stem upgrade Suno charges $22/month for — yours forever.</p>
+  <p class="hero-subtext">HTDemucs · Basic-Pitch · LUFS normalisation · BPM + Key · All local</p>
+  <div class="hero-buttons">
+    <a href="#pricing" class="btn-primary">
+      Get RAWMASTER — from £19
+    </a>
+    <a href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank" class="btn-secondary">
+      Try free demo (90s limit)
+    </a>
+  </div>
+  <p class="hero-price-note">One-time payment. No subscription. No cloud. No account.</p>
+
+  <div class="terminal-wrap">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot dot-red"></div>
+        <div class="terminal-dot dot-yellow"></div>
+        <div class="terminal-dot dot-green"></div>
+        <span class="terminal-title">terminal — rawmaster</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">❯ </span><span class="t-cmd">rawmaster night_terrace_set.mp3 --stems --midi</span></div>
+        <div class="t-dim">&nbsp;</div>
+        <div class="t-out">  🔍 BPM: 128.0  |  Key: A minor</div>
+        <div class="t-out">  🎛  Remastering night_terrace_set.mp3…</div>
+        <div class="t-green">  ✅ Remaster saved → night_terrace_set_RAWMASTER.wav</div>
+        <div class="t-out">  🥁 Separating stems (htdemucs_ft)…</div>
+        <div class="t-green">  ✅ Stem saved → stems/vocals.wav</div>
+        <div class="t-green">  ✅ Stem saved → stems/drums.wav</div>
+        <div class="t-green">  ✅ Stem saved → stems/bass.wav</div>
+        <div class="t-green">  ✅ Stem saved → stems/other.wav</div>
+        <div class="t-out">  🎹 Extracting MIDI from bass…</div>
+        <div class="t-green">  ✅ MIDI saved → midi/bass.mid</div>
+        <div class="t-dim">&nbsp;</div>
+        <div class="t-green">  🔥 Done. Go make noise.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <p class="section-label">What you get</p>
+  <h2 class="section-title">Everything. Local.<br>One command.</h2>
+  <p class="section-sub">No uploads. No API credits. No monthly bill. Everything runs on your machine.</p>
+
+  <div class="features-grid">
+    <div class="feature">
+      <span class="feature-icon">🥁</span>
+      <p class="feature-title">4-STEM SEPARATION</p>
+      <p class="feature-desc">HTDemucs fine-tuned model. Vocals, drums, bass, other — all at 44.1kHz float32 WAV. 6-stem mode adds guitar + piano.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🎛</span>
+      <p class="feature-title">REMASTER PIPELINE</p>
+      <p class="feature-desc">Spectral gating → LUFS normalisation to −14.0 (streaming standard) → hard limiter at −0.3 dBFS. 24-bit output.</p>
+    </div>
+    <div class="feature" style="position:relative;">
+      <span class="feature-badge">NEW</span>
+      <span class="feature-icon">🎯</span>
+      <p class="feature-title">REFERENCE MASTERING</p>
+      <p class="feature-desc">Drop a reference track and your mix is matched to its EQ curve, loudness, and dynamics. Pro-grade mastering built in — no subscription required.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🎹</span>
+      <p class="feature-title">MIDI EXTRACTION</p>
+      <p class="feature-desc">Basic-Pitch neural MIDI transcription from bass (and optionally vocals). Polyphonic. Export straight into your DAW.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🔍</span>
+      <p class="feature-title">BPM + KEY + CHORDS</p>
+      <p class="feature-desc">Beat tracking, key detection, and full chord progression analysis with timestamps. BPM, key, and chord chart written to output.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⏩</span>
+      <p class="feature-title">SPEED + PITCH CONTROL</p>
+      <p class="feature-desc">Time-stretch and pitch-shift any audio. Slow down to learn parts, shift key to match your range. Preserves quality.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">📂</span>
+      <p class="feature-title">BATCH MODE</p>
+      <p class="feature-desc">Point it at a folder. Every audio file gets remastered and separated. Walk away, come back to stems.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🔒</span>
+      <p class="feature-title">100% LOCAL</p>
+      <p class="feature-desc">No network requests. No uploads. Your unreleased music never leaves your machine. Models download once, run forever.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<div class="pipeline-section" id="pipeline">
+  <div class="pipeline-inner">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title">The pipeline,<br>step by step.</h2>
+
+    <div class="pipeline-steps">
+      <div class="pipeline-step">
+        <span class="step-num">01</span>
+        <div class="step-content">
+          <p class="step-title">Load + Resample</p>
+          <p class="step-desc">Audio loaded at 44100 Hz, converted to float32. Supports MP3, WAV, FLAC, AIFF, OGG, M4A.</p>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-num">02</span>
+        <div class="step-content">
+          <p class="step-title">Spectral Gating</p>
+          <p class="step-desc">Non-stationary noise reduction via noisereduce. prop_decrease=0.6 — aggressive enough to kill shimmer and hiss, safe enough to preserve transients and low-end.</p>
+          <span class="step-tech">noisereduce</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-num">03</span>
+        <div class="step-content">
+          <p class="step-title">LUFS Normalisation</p>
+          <p class="step-desc">Integrated loudness measured and normalised to −14.0 LUFS. The streaming standard: Spotify, Apple Music, YouTube.</p>
+          <span class="step-tech">pyloudnorm</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-num">04</span>
+        <div class="step-content">
+          <p class="step-title">Hard Limiter</p>
+          <p class="step-desc">Peak ceiling at −0.3 dBFS. Clean, ISP-safe output with no inter-sample distortion.</p>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-num">04b</span>
+        <div class="step-content">
+          <p class="step-title">Reference Mastering (optional)</p>
+          <p class="step-desc">When a reference track is provided via --ref, spectral profile, loudness, and dynamics are matched to the reference. Replaces the fixed LUFS + limiter chain.</p>
+          <span class="step-tech">matchering</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-num">05</span>
+        <div class="step-content">
+          <p class="step-title">Stem Separation</p>
+          <p class="step-desc">HTDemucs fine-tuned model with 2 shifts and 0.25 overlap. Best-in-class open-source separation. Runs on CPU or GPU.</p>
+          <span class="step-tech">htdemucs_ft</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <span class="step-num">06</span>
+        <div class="step-content">
+          <p class="step-title">MIDI Extraction</p>
+          <p class="step-desc">Spotify's Basic-Pitch model converts bass stem to polyphonic MIDI. Note activations at frame level — accurate, expressive output.</p>
+          <span class="step-tech">basic-pitch</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OUTPUT STRUCTURE -->
+<section class="output-section">
+  <p class="section-label">Output</p>
+  <h2 class="section-title">Clean structure.<br>Every time.</h2>
+
+  <div class="output-tree">
+    <div class="tree-dir">rawmaster_output/</div>
+    <div class="tree-dir">└── night_terrace_set/</div>
+    <div><span class="tree-dir">    ├── </span><span class="tree-green">night_terrace_set_RAWMASTER.wav</span><span class="tree-note">  ← 24-bit, −14 LUFS</span></div>
+    <div><span class="tree-dir">    ├── </span><span class="tree-blue">info.txt</span><span class="tree-note">                          ← BPM: 128.0 | Key: A minor</span></div>
+    <div><span class="tree-dir">    ├── stems/</span></div>
+    <div><span class="tree-dir">    │   ├── </span><span class="tree-green">vocals.wav</span></div>
+    <div><span class="tree-dir">    │   ├── </span><span class="tree-green">drums.wav</span></div>
+    <div><span class="tree-dir">    │   ├── </span><span class="tree-green">bass.wav</span></div>
+    <div><span class="tree-dir">    │   └── </span><span class="tree-green">other.wav</span></div>
+    <div><span class="tree-dir">    └── midi/</span></div>
+    <div><span class="tree-dir">        └── </span><span class="tree-red">bass.mid</span><span class="tree-note">                          ← polyphonic MIDI</span></div>
+  </div>
+</section>
+
+<!-- COMMANDS -->
+<section class="commands-section">
+  <p class="section-label">CLI Reference</p>
+  <h2 class="section-title">One tool.<br>Every job.</h2>
+
+  <div class="commands-grid">
+    <div class="command-block">
+      <div class="command-label">BASIC</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> track.mp3</div>
+        <div class="cmd-comment"># remaster only</div>
+      </div>
+    </div>
+    <div class="command-block">
+      <div class="command-label">STEMS</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> track.mp3 --stems</div>
+        <div class="cmd-comment"># remaster + 4 stems</div>
+      </div>
+    </div>
+    <div class="command-block">
+      <div class="command-label">STEMS + MIDI</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> track.mp3 --stems --midi</div>
+        <div class="cmd-comment"># + MIDI from bass stem</div>
+      </div>
+    </div>
+    <div class="command-block">
+      <div class="command-label">6-STEM MODE</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> track.mp3 --stems 6</div>
+        <div class="cmd-comment"># adds guitar + piano</div>
+      </div>
+    </div>
+    <div class="command-block">
+      <div class="command-label">BATCH</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> ./folder/ --stems</div>
+        <div class="cmd-comment"># process whole folder</div>
+      </div>
+    </div>
+    <div class="command-block">
+      <div class="command-label">REFERENCE MASTER</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> track.mp3 --ref pro_mix.wav</div>
+        <div class="cmd-comment"># match EQ + loudness to reference</div>
+      </div>
+    </div>
+    <div class="command-block">
+      <div class="command-label">INFO ONLY</div>
+      <div class="command-code">
+        <div><span style="color:#e63012">rawmaster</span> track.mp3 --info</div>
+        <div class="cmd-comment"># BPM + key, no processing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NO CLOUD -->
+<div class="nocloud-section">
+  <div class="nocloud-inner">
+    <h2 class="nocloud-title">Your music stays on<br>your machine.</h2>
+    <p class="nocloud-sub">No uploads. No account. No API credits. Models download once, run forever. Your unreleased tracks are yours — and yours alone.</p>
+    <div class="nocloud-bullets">
+      <span class="nocloud-pill">No cloud processing</span>
+      <span class="nocloud-pill">No subscription</span>
+      <span class="nocloud-pill">No internet after setup</span>
+      <span class="nocloud-pill">macOS + Windows + Linux</span>
+      <span class="nocloud-pill">CPU + GPU</span>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section class="faq-section" id="faq">
+  <p class="section-label">FAQ</p>
+  <h2 class="section-title">Questions.<br>Answered.</h2>
+
+  <details>
+    <summary>How long does processing take?</summary>
+    <p class="faq-answer">BPM + key detection: ~5 seconds. Remastering: ~10 seconds. Stem separation: 5-15 minutes on CPU, 1-3 minutes with a GPU. MIDI extraction: ~10 seconds. Total for a full run on CPU: around 10-20 minutes per track.</p>
+  </details>
+
+  <details>
+    <summary>What are the system requirements?</summary>
+    <p class="faq-answer">Python 3.9+, macOS (Intel or Apple Silicon), Windows, or Linux. ~1GB disk space for AI models (downloaded once on first run). GPU is optional but speeds up stem separation significantly. 8GB RAM recommended.</p>
+  </details>
+
+  <details>
+    <summary>What does reference mastering do?</summary>
+    <p class="faq-answer">Upload any professionally mastered track as a reference. RAWMASTER analyses its spectral profile (EQ curve), loudness, and dynamics — then matches your track to sound like it. This is what cloud mastering services charge monthly subscriptions for, but RAWMASTER runs locally and costs nothing after purchase.</p>
+  </details>
+
+  <details>
+    <summary>Can I use the outputs commercially?</summary>
+    <p class="faq-answer">Yes. Your license, your outputs. Stems, remasters, and MIDI files are yours to use in released music, remixes, samples, or any commercial project.</p>
+  </details>
+
+  <details>
+    <summary>What audio formats are supported?</summary>
+    <p class="faq-answer">MP3, WAV, FLAC, AIFF, OGG, and M4A. Output is always 24-bit WAV at 44.1kHz.</p>
+  </details>
+
+  <details>
+    <summary>What's the refund policy?</summary>
+    <p class="faq-answer">Gumroad's standard 30-day refund policy applies. If RAWMASTER doesn't work for you, request a refund through your Gumroad receipt.</p>
+  </details>
+</section>
+
+<!-- PRICING -->
+<div class="pricing-section" id="pricing">
+  <div class="pricing-inner">
+    <p class="section-label">Pricing</p>
+    <h2 class="section-title">Pay once.<br>Own it forever.</h2>
+    <p class="section-sub" style="margin-bottom:0">No monthly fee. No usage limits. No expiry. One license, one machine.</p>
+
+    <div class="pricing-grid">
+
+      <!-- CLI -->
+      <div class="pricing-card">
+        <p class="pricing-name">CLI</p>
+        <p class="pricing-price">£19<span></span></p>
+        <p class="pricing-once">ONE-TIME · NO SUBSCRIPTION</p>
+        <p class="pricing-desc">The full pipeline in your terminal. Best for producers who live in the command line.</p>
+        <ul class="pricing-features">
+          <li>4-stem HTDemucs separation</li>
+          <li>Remaster pipeline (LUFS + limiter)</li>
+          <li>MIDI extraction (bass + vocals)</li>
+          <li>BPM + key detection</li>
+          <li>Batch mode</li>
+          <li>macOS + Windows</li>
+        </ul>
+        <a href="https://scanme2.gumroad.com/l/rawmaster-cli" target="_blank" class="pricing-btn outline">Download CLI</a>
+      </div>
+
+      <!-- DESKTOP — featured -->
+      <div class="pricing-card featured">
+        <div class="pricing-badge">MOST POPULAR</div>
+        <p class="pricing-name">DESKTOP</p>
+        <p class="pricing-price">£29<span></span></p>
+        <p class="pricing-once">ONE-TIME · NO SUBSCRIPTION</p>
+        <p class="pricing-desc">Drag, drop, download. Same pipeline with a browser-based visual interface — no terminal required.</p>
+        <ul class="pricing-features">
+          <li>Everything in CLI</li>
+          <li>Drag-and-drop browser UI</li>
+          <li>In-browser audio playback</li>
+          <li>One-click stems + MIDI ZIP</li>
+          <li>Visual progress indicator</li>
+          <li>macOS + Windows + Linux</li>
+        </ul>
+        <a href="https://scanme2.gumroad.com/l/rawmaster" target="_blank" class="pricing-btn">Download Desktop</a>
+      </div>
+
+      <!-- BUNDLE -->
+      <div class="pricing-card">
+        <p class="pricing-name">TOOLKIT</p>
+        <p class="pricing-price">£39<span></span></p>
+        <p class="pricing-once">ONE-TIME · £44 VALUE</p>
+        <p class="pricing-desc">RAWMASTER Desktop + GRANULE (granular reverb browser plugin). Both Smash Daddys tools.</p>
+        <ul class="pricing-features">
+          <li>RAWMASTER Desktop (£29)</li>
+          <li>GRANULE reverb plugin (£15)</li>
+          <li>Save £5 on the bundle</li>
+        </ul>
+        <a href="https://scanme2.gumroad.com/l/rawmaster-bundle" target="_blank" class="pricing-btn outline">Get Toolkit</a>
+      </div>
+
+    </div>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>CLI</th>
+          <th class="featured-col">DESKTOP</th>
+          <th>TOOLKIT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Stem separation (4 + 6)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Remaster pipeline</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Reference mastering</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>MIDI extraction</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>BPM + key detection</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Batch mode</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Drag-and-drop UI</td><td class="dash">—</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>In-browser playback</td><td class="dash">—</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>GRANULE reverb plugin</td><td class="dash">—</td><td class="dash">—</td><td class="check">&#10003;</td></tr>
+        <tr><td>Price</td><td>£19</td><td style="color:var(--red);font-weight:700">£29</td><td>£39</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;width:100%;margin-bottom:20px;">
+    <div class="footer-logo">RAW<span>MASTER</span></div>
+    <ul class="footer-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <ul class="footer-links">
+      <li><a href="https://github.com/SICQR/rawmaster" target="_blank">GitHub</a></li>
+      <li><a href="https://huggingface.co/spaces/smashd/rawmaster" target="_blank">Demo</a></li>
+      <li><a href="https://scanme2.gumroad.com" target="_blank">Gumroad</a></li>
+    </ul>
+  </div>
+  <ul class="footer-links">
+    <li><a href="/terms.html">Terms</a></li>
+    <li><a href="/privacy.html">Privacy</a></li>
+    <li><a href="/attributions.html">Attributions</a></li>
+  </ul>
+  <p class="footer-copy">© 2026 Smash Daddys / Raw Convict Records</p>
+</footer>
+
+</body>
+</html>
