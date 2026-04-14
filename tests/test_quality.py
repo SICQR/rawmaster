@@ -116,16 +116,12 @@ class TestPostProcessingQuality:
         assert reduction > 0.5, f"Low-freq reduction only {reduction:.1%}, expected >50%"
         print(f"  Low-freq energy reduced by {reduction:.1%}")
 
-    def test_bass_lowpass_removes_bleed(self, tmp_path):
-        """Post-processed bass should have less high-frequency bleed."""
+    def test_bass_passes_through_clean(self, tmp_path):
+        """Bass has empty DSP config (benchmark-tuned) — should pass unchanged."""
         from rawmaster import post_process_stems
         sr = 44100
         t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
-        # Bass with high-freq bleed at 12kHz
-        bass = (
-            np.sin(2 * np.pi * 80 * t) * 0.3 +    # wanted bass
-            np.sin(2 * np.pi * 12000 * t) * 0.15   # unwanted bleed
-        ).astype(np.float32)
+        bass = (np.sin(2 * np.pi * 80 * t) * 0.3).astype(np.float32)
         stereo = np.stack([bass, bass]).T
         path = tmp_path / "bass.wav"
         sf.write(str(path), stereo, sr)
@@ -133,28 +129,16 @@ class TestPostProcessingQuality:
         post_process_stems({"bass": path})
         processed_data, _ = sf.read(str(path))
 
-        orig_fft = np.abs(np.fft.rfft(bass))
-        proc_fft = np.abs(np.fft.rfft(processed_data[:, 0]))
-        freqs = np.fft.rfftfreq(len(bass), 1.0 / sr)
+        # Bass has no DSP — data should be unchanged
+        assert np.allclose(stereo, processed_data, atol=1e-4), "Bass stem should pass through unchanged"
+        print(f"  Bass passed through cleanly (no DSP applied)")
 
-        # Energy above 10kHz should be heavily reduced
-        high_mask = freqs > 10000
-        orig_high = np.sum(orig_fft[high_mask] ** 2)
-        proc_high = np.sum(proc_fft[high_mask] ** 2)
-        reduction = 1 - (proc_high / max(orig_high, 1e-10))
-
-        assert reduction > 0.7, f"High-freq reduction only {reduction:.1%}, expected >70%"
-        print(f"  High-freq bleed reduced by {reduction:.1%}")
-
-    def test_noise_gate_silences_quiet_passages(self, tmp_path):
-        """Noise gate should silence near-silent sections."""
+    def test_vocals_highpass_minimal_impact(self, tmp_path):
+        """Vocals highpass at 55Hz should barely affect a 300Hz vocal signal."""
         from rawmaster import post_process_stems
         sr = 44100
         t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
-        # Vocals: loud section then very quiet noise
-        vocals = np.zeros_like(t, dtype=np.float32)
-        vocals[:sr] = np.sin(2 * np.pi * 300 * t[:sr]) * 0.3  # 1s of vocals
-        vocals[sr:] = np.random.RandomState(42).randn(len(t) - sr).astype(np.float32) * 0.0005  # very quiet noise
+        vocals = (np.sin(2 * np.pi * 300 * t) * 0.3).astype(np.float32)
         stereo = np.stack([vocals, vocals]).T
         path = tmp_path / "vocals.wav"
         sf.write(str(path), stereo, sr)
@@ -162,13 +146,13 @@ class TestPostProcessingQuality:
         post_process_stems({"vocals": path})
         processed_data, _ = sf.read(str(path))
 
-        # The quiet section (after 1.5s to avoid transients) should be quieter
-        quiet_section_orig = np.sqrt(np.mean(vocals[int(sr * 1.5):]**2))
-        quiet_section_proc = np.sqrt(np.mean(processed_data[int(sr * 1.5):, 0]**2))
+        # 300Hz is well above the 55Hz highpass — signal should be nearly identical
+        orig_rms = np.sqrt(np.mean(vocals**2))
+        proc_rms = np.sqrt(np.mean(processed_data[:, 0]**2))
+        ratio = proc_rms / orig_rms
 
-        assert quiet_section_proc <= quiet_section_orig, \
-            f"Quiet section got louder: {quiet_section_orig:.6f} → {quiet_section_proc:.6f}"
-        print(f"  Quiet section RMS: {quiet_section_orig:.6f} → {quiet_section_proc:.6f}")
+        assert 0.95 < ratio < 1.05, f"RMS ratio {ratio:.3f} — highpass changed signal too much"
+        print(f"  Vocal RMS ratio after highpass: {ratio:.4f} (1.0 = unchanged)")
 
     def test_bandpass_split_energy_conservation(self, tmp_path):
         """Frequency band splitting should approximately conserve total energy."""

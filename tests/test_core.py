@@ -149,23 +149,20 @@ class TestPostProcessStems:
         processed_data, _ = sf.read(str(result["drums"]))
         assert not np.array_equal(original_data, processed_data)
 
-    def test_bass_lowpass_attenuates_highs(self, tmp_path):
+    def test_bass_passes_through_clean(self, tmp_path):
+        """Bass DSP config is empty (benchmark-tuned) — signal should pass unchanged."""
         from rawmaster import post_process_stems
-        # Create bass stem with strong 12kHz content (should be filtered)
         sr = 44100
         t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
-        high_freq = np.stack([
-            np.sin(2 * np.pi * 12000 * t) * 0.5,
-            np.sin(2 * np.pi * 12000 * t) * 0.5,
+        bass = np.stack([
+            np.sin(2 * np.pi * 80 * t) * 0.5,
+            np.sin(2 * np.pi * 80 * t) * 0.5,
         ]).T.astype(np.float32)
         bass_path = tmp_path / "bass.wav"
-        sf.write(str(bass_path), high_freq, sr)
-        original_rms = np.sqrt(np.mean(high_freq**2))
+        sf.write(str(bass_path), bass, sr)
         post_process_stems({"bass": bass_path})
         processed, _ = sf.read(str(bass_path))
-        processed_rms = np.sqrt(np.mean(processed**2))
-        # 12kHz should be heavily attenuated by the 8kHz lowpass
-        assert processed_rms < original_rms * 0.5
+        assert np.allclose(bass, processed, atol=1e-4), "Bass should pass through unchanged"
 
     def test_unknown_stem_unchanged(self, tmp_path):
         from rawmaster import post_process_stems
