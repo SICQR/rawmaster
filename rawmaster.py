@@ -50,6 +50,9 @@ ENSEMBLE_MODELS = [
     ("htdemucs",    0.4),   # secondary — different spectral characteristics
 ]
 
+# BS-Roformer model for best-in-class vocal separation (12.9 dB SDR vs Demucs 10.8)
+ROFORMER_MODEL = "model_bs_roformer_ep_317_sdr_12.9755.ckpt"
+
 # Per-stem DSP tailored to each source type
 STEM_DSP = {
     "vocals": {"highpass_hz": 80, "deess_hz": 6000, "gate_db": -40},
@@ -259,16 +262,60 @@ def _run_demucs_model(audio_path: Path, output_dir: Path, model: str,
     return stem_paths
 
 
+def _run_roformer_vocals(audio_path: Path, output_dir: Path) -> dict:
+    """Run BS-Roformer for best-in-class vocal/instrumental separation (12.9 dB SDR)."""
+    try:
+        from audio_separator.separator import Separator
+    except ImportError:
+        print("  ⚠️  audio-separator not installed. Install with: pip install audio-separator[cpu]")
+        return {}
+
+    print(f"  🎤 BS-Roformer vocal separation (12.9 dB SDR)…")
+    out_dir = output_dir / "_roformer_tmp"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    separator = Separator(
+        output_dir=str(out_dir),
+        output_format="WAV",
+        output_bitdepth="FLOAT",
+        log_level=30,  # WARNING only — suppress info spam
+    )
+    separator.load_model(model_filename=ROFORMER_MODEL)
+    output_files = separator.separate(str(audio_path))
+
+    # Map output filenames to stems
+    stem_paths = {}
+    for f in output_files:
+        full_path = out_dir / f
+        if not full_path.exists():
+            full_path = Path(f)  # might be absolute already
+        if "(Vocals)" in f or "vocals" in f.lower():
+            stem_paths["vocals"] = full_path
+        elif "(Instrumental)" in f or "instrumental" in f.lower():
+            stem_paths["instrumental"] = full_path
+    return stem_paths
+
+
 def separate_stems_ensemble(audio_path: Path, output_dir: Path,
                             quality: str = "best") -> dict:
-    """Run two models and blend for maximum separation quality."""
+    """Run Demucs ensemble + BS-Roformer for maximum separation quality."""
     shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["best"])
     shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
 
     stems_out = output_dir / "stems"
     stems_out.mkdir(parents=True, exist_ok=True)
 
-    # Run each model
+    # Step 1: Run BS-Roformer for best-in-class vocals (12.9 dB SDR)
+    roformer_vocals = None
+    try:
+        roformer_paths = _run_roformer_vocals(audio_path, output_dir)
+        if "vocals" in roformer_paths:
+            roformer_vocals = roformer_paths["vocals"]
+            print(f"  ✅ BS-Roformer vocals ready")
+    except Exception as e:
+        print(f"  ⚠️  BS-Roformer failed: {e} — using Demucs vocals only")
+
+    # Step 2: Run Demucs models for full stem set
     model_results = []
     for i, (model_name, weight) in enumerate(ENSEMBLE_MODELS):
         print(f"  🥁 Model {i+1}/{len(ENSEMBLE_MODELS)}: {model_name} (shifts={shifts})…")
@@ -279,12 +326,12 @@ def separate_stems_ensemble(audio_path: Path, output_dir: Path,
         except Exception as e:
             print(f"  ⚠️  Model {model_name} failed: {e}")
             if not model_results:
-                raise  # first model failed — nothing to fall back to
+                raise
             print(f"  Using single-model output only.")
             break
 
-    # Blend stems one at a time (memory efficient)
-    print(f"  🔀 Blending {len(model_results)} model(s)…")
+    # Step 3: Blend Demucs stems
+    print(f"  🔀 Blending {len(model_results)} Demucs model(s)…")
     all_stem_names = set()
     for paths, _ in model_results:
         all_stem_names.update(paths.keys())
@@ -301,20 +348,32 @@ def separate_stems_ensemble(audio_path: Path, output_dir: Path,
             if blended is None:
                 blended = audio * weight
             else:
-                # Align lengths (should be identical but be safe)
                 min_len = min(len(blended), len(audio))
                 blended = blended[:min_len] + audio[:min_len] * weight
             total_weight += weight
 
         if blended is not None and total_weight > 0:
-            blended /= total_weight  # normalize weights
+            blended /= total_weight
             dest = stems_out / f"{stem_name}.wav"
             sf.write(str(dest), blended, sr, subtype="FLOAT")
             blended_paths[stem_name] = dest
             print(f"  ✅ Blended → stems/{stem_name}.wav")
 
-    # Clean up all model temp dirs
+    # Step 4: Replace Demucs vocals with BS-Roformer/Demucs hybrid (70/30 blend)
+    if roformer_vocals and "vocals" in blended_paths:
+        print(f"  🎤 Blending BS-Roformer vocals (70%) + Demucs vocals (30%)…")
+        roformer_audio, sr = sf.read(str(roformer_vocals), dtype="float32")
+        demucs_audio, _ = sf.read(str(blended_paths["vocals"]), dtype="float32")
+        min_len = min(len(roformer_audio), len(demucs_audio))
+        hybrid_vocals = roformer_audio[:min_len] * 0.7 + demucs_audio[:min_len] * 0.3
+        dest = stems_out / "vocals.wav"
+        sf.write(str(dest), hybrid_vocals, sr, subtype="FLOAT")
+        blended_paths["vocals"] = dest
+        print(f"  ✅ Hybrid vocals → stems/vocals.wav (BS-Roformer + Demucs)")
+
+    # Clean up
     shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
+    shutil.rmtree(str(output_dir / "_roformer_tmp"), ignore_errors=True)
 
     return blended_paths
 

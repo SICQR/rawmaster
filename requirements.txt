@@ -10,6 +10,7 @@ onnxruntime>=1.16.0
 #   .venv/bin/pip install basic-pitch --no-deps
 #   .venv/bin/pip install mir-eval pretty-midi resampy onnxruntime
 matchering>=2.0.6
+audio-separator[cpu]>=0.44.0
 pedalboard>=0.9.0
 scipy>=1.10.0
 gradio>=4.0.0
