@@ -186,6 +186,187 @@ class TestPostProcessingQuality:
         print(f"  Energy conservation ratio: {ratio:.2f}")
 
 
+class TestChordDetection:
+    """Test chord detection accuracy on synthetic audio with known chords."""
+
+    def _make_chord(self, freqs, duration=3.0, sr=44100):
+        """Create a synthetic chord from a list of frequencies."""
+        t = np.linspace(0, duration, int(sr * duration), endpoint=False)
+        signal = np.zeros_like(t, dtype=np.float32)
+        for f in freqs:
+            signal += np.sin(2 * np.pi * f * t) * (0.3 / len(freqs))
+        return signal, sr
+
+    # Major triad frequencies (root, major 3rd, perfect 5th)
+    MAJOR_CHORDS = {
+        "C": [261.63, 329.63, 392.0],
+        "D": [293.66, 369.99, 440.0],
+        "E": [329.63, 415.30, 493.88],
+        "F": [349.23, 440.0, 523.25],
+        "G": [392.0, 493.88, 587.33],
+        "A": [440.0, 554.37, 659.25],
+        "B": [493.88, 622.25, 739.99],
+    }
+
+    MINOR_CHORDS = {
+        "Am": [220.0, 261.63, 329.63],
+        "Em": [329.63, 392.0, 493.88],
+        "Dm": [293.66, 349.23, 440.0],
+    }
+
+    def test_detects_c_major(self, tmp_path):
+        from rawmaster import detect_chords
+        audio, sr = self._make_chord(self.MAJOR_CHORDS["C"])
+        path = tmp_path / "c_major.wav"
+        sf.write(str(path), audio, sr)
+        chords = detect_chords(path, tmp_path / "out", bpm=120)
+        detected = [c for _, c in chords]
+        assert "C" in detected, f"Expected C major, got {detected}"
+
+    def test_detects_all_major_chords(self, tmp_path):
+        """Each major chord should be correctly identified."""
+        from rawmaster import detect_chords
+        correct = 0
+        for name, freqs in self.MAJOR_CHORDS.items():
+            audio, sr = self._make_chord(freqs)
+            path = tmp_path / f"{name}.wav"
+            sf.write(str(path), audio, sr)
+            out_dir = tmp_path / f"{name}_out"
+            chords = detect_chords(path, out_dir, bpm=120)
+            detected = chords[0][1] if chords else "N"
+            if detected == name:
+                correct += 1
+        accuracy = correct / len(self.MAJOR_CHORDS)
+        assert accuracy >= 0.85, f"Major chord accuracy {accuracy:.0%} (expected >= 85%)"
+        print(f"  Major chord accuracy: {accuracy:.0%} ({correct}/{len(self.MAJOR_CHORDS)})")
+
+    def test_detects_minor_chords(self, tmp_path):
+        """Minor chords should be correctly identified."""
+        from rawmaster import detect_chords
+        correct = 0
+        for name, freqs in self.MINOR_CHORDS.items():
+            audio, sr = self._make_chord(freqs)
+            path = tmp_path / f"{name}.wav"
+            sf.write(str(path), audio, sr)
+            out_dir = tmp_path / f"{name}_out"
+            chords = detect_chords(path, out_dir, bpm=120)
+            detected = chords[0][1] if chords else "N"
+            if detected == name:
+                correct += 1
+        accuracy = correct / len(self.MINOR_CHORDS)
+        assert accuracy >= 0.66, f"Minor chord accuracy {accuracy:.0%} (expected >= 66%)"
+        print(f"  Minor chord accuracy: {accuracy:.0%} ({correct}/{len(self.MINOR_CHORDS)})")
+
+    def test_detects_chord_changes(self, tmp_path):
+        """Should detect multiple distinct chords in a progression."""
+        from rawmaster import detect_chords
+        sr = 44100
+        # Use longer segments (3s each) with fade transitions for cleaner detection
+        parts = []
+        for freqs in [self.MAJOR_CHORDS["C"], self.MAJOR_CHORDS["F"], self.MAJOR_CHORDS["G"]]:
+            audio, _ = self._make_chord(freqs, duration=3.0, sr=sr)
+            # Fade edges to avoid transient artifacts
+            fade = int(sr * 0.05)
+            audio[:fade] *= np.linspace(0, 1, fade)
+            audio[-fade:] *= np.linspace(1, 0, fade)
+            parts.append(audio)
+        prog = np.concatenate(parts)
+        path = tmp_path / "progression.wav"
+        sf.write(str(path), prog, sr)
+        chords = detect_chords(path, tmp_path / "out", bpm=120)
+        unique_chords = set(c for _, c in chords)
+        assert len(unique_chords) >= 2, f"Expected >= 2 distinct chords, got {unique_chords}"
+        print(f"  Detected {len(unique_chords)} distinct chords: {unique_chords}")
+
+    def test_silence_returns_no_chords(self, tmp_path):
+        from rawmaster import detect_chords
+        sr = 44100
+        silence = np.zeros(sr * 3, dtype=np.float32)
+        path = tmp_path / "silence.wav"
+        sf.write(str(path), silence, sr)
+        chords = detect_chords(path, tmp_path / "out", bpm=120)
+        assert len(chords) == 0, f"Silence should have no chords, got {chords}"
+
+    def test_outputs_chord_file(self, tmp_path):
+        from rawmaster import detect_chords
+        audio, sr = self._make_chord(self.MAJOR_CHORDS["C"])
+        path = tmp_path / "test.wav"
+        sf.write(str(path), audio, sr)
+        detect_chords(path, tmp_path / "out", bpm=120)
+        chord_file = tmp_path / "out" / "chords.txt"
+        assert chord_file.exists(), "chords.txt should be created"
+        content = chord_file.read_text()
+        assert "CHORD PROGRESSION" in content
+        assert "C" in content
+
+
+class TestSpeedPitchControl:
+    """Test speed and pitch adjustment accuracy."""
+
+    def test_speed_changes_duration(self, tmp_path):
+        from rawmaster import change_speed_pitch
+        sr = 44100
+        t = np.linspace(0, 4.0, int(sr * 4.0), endpoint=False)
+        audio = (np.sin(2 * np.pi * 440 * t) * 0.3).astype(np.float32)
+        path = tmp_path / "input.wav"
+        sf.write(str(path), audio, sr)
+
+        out = change_speed_pitch(path, tmp_path / "out", speed=0.5)
+        info = sf.info(str(out))
+        # 0.5x speed = 2x duration: 4s -> 8s
+        assert 7.5 < info.duration < 8.5, f"Expected ~8s, got {info.duration:.1f}s"
+
+    def test_speed_up_shortens_duration(self, tmp_path):
+        from rawmaster import change_speed_pitch
+        sr = 44100
+        t = np.linspace(0, 4.0, int(sr * 4.0), endpoint=False)
+        audio = (np.sin(2 * np.pi * 440 * t) * 0.3).astype(np.float32)
+        path = tmp_path / "input.wav"
+        sf.write(str(path), audio, sr)
+
+        out = change_speed_pitch(path, tmp_path / "out", speed=2.0)
+        info = sf.info(str(out))
+        # 2x speed = 0.5x duration: 4s -> 2s
+        assert 1.5 < info.duration < 2.5, f"Expected ~2s, got {info.duration:.1f}s"
+
+    def test_pitch_preserves_duration(self, tmp_path):
+        from rawmaster import change_speed_pitch
+        sr = 44100
+        t = np.linspace(0, 4.0, int(sr * 4.0), endpoint=False)
+        audio = (np.sin(2 * np.pi * 440 * t) * 0.3).astype(np.float32)
+        path = tmp_path / "input.wav"
+        sf.write(str(path), audio, sr)
+
+        out = change_speed_pitch(path, tmp_path / "out", pitch_semitones=5)
+        info = sf.info(str(out))
+        # Pitch shift should NOT change duration
+        assert 3.5 < info.duration < 4.5, f"Expected ~4s, got {info.duration:.1f}s"
+
+    def test_no_change_returns_original(self, tmp_path):
+        from rawmaster import change_speed_pitch
+        sr = 44100
+        audio = (np.sin(np.linspace(0, 10, sr * 2)) * 0.3).astype(np.float32)
+        path = tmp_path / "input.wav"
+        sf.write(str(path), audio, sr)
+
+        out = change_speed_pitch(path, tmp_path / "out", speed=None, pitch_semitones=None)
+        assert out == path, "No changes should return original path"
+
+    def test_output_is_valid_wav(self, tmp_path):
+        from rawmaster import change_speed_pitch
+        sr = 44100
+        t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
+        audio = (np.sin(2 * np.pi * 440 * t) * 0.3).astype(np.float32)
+        path = tmp_path / "input.wav"
+        sf.write(str(path), audio, sr)
+
+        out = change_speed_pitch(path, tmp_path / "out", speed=0.8, pitch_semitones=-2)
+        assert out.exists()
+        data, file_sr = sf.read(str(out))
+        assert file_sr == sr
+        assert len(data) > 0
+
+
 class TestSDRMetrics:
     """Test SDR computation works correctly with known signals."""
 
