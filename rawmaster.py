@@ -673,6 +673,131 @@ def detect_info(audio_path: Path, output_dir: Path) -> dict:
 
 
 # ─────────────────────────────────────────────
+#  STEP 5 — CHORD DETECTION
+# ─────────────────────────────────────────────
+
+# Chord templates: 12 major + 12 minor triads
+_CHORD_TEMPLATES = {}
+_NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+for i, note in enumerate(_NOTE_NAMES):
+    # Major triad: root + major third (4) + perfect fifth (7)
+    maj = np.zeros(12)
+    maj[i] = 1; maj[(i + 4) % 12] = 1; maj[(i + 7) % 12] = 1
+    _CHORD_TEMPLATES[note] = maj
+    # Minor triad: root + minor third (3) + perfect fifth (7)
+    mi = np.zeros(12)
+    mi[i] = 1; mi[(i + 3) % 12] = 1; mi[(i + 7) % 12] = 1
+    _CHORD_TEMPLATES[f"{note}m"] = mi
+    # Dominant 7th: root + major third (4) + fifth (7) + minor seventh (10)
+    dom7 = np.zeros(12)
+    dom7[i] = 1; dom7[(i + 4) % 12] = 1; dom7[(i + 7) % 12] = 1; dom7[(i + 10) % 12] = 1
+    _CHORD_TEMPLATES[f"{note}7"] = dom7
+
+
+def detect_chords(audio_path: Path, output_dir: Path, bpm: float = 120.0) -> list:
+    """Detect chord progression with timestamps. Returns list of (time_sec, chord_name)."""
+    print("  🎵 Detecting chords…")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    y, sr = librosa.load(str(audio_path), sr=None, mono=True)
+
+    # Use beat-synchronous chroma for cleaner chord boundaries
+    hop_length = 512
+    chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+
+    # Segment by beats if BPM is available, otherwise use fixed segments
+    if bpm and bpm > 0:
+        beat_frames = librosa.beat.beat_track(y=y, sr=sr, bpm=bpm)[1]
+        if len(beat_frames) < 2:
+            beat_frames = np.arange(0, chroma.shape[1], int(sr / hop_length * 0.5))
+    else:
+        beat_frames = np.arange(0, chroma.shape[1], int(sr / hop_length * 0.5))
+
+    # Match each segment to best chord template
+    chords = []
+    prev_chord = None
+    for i in range(len(beat_frames) - 1):
+        start_frame = beat_frames[i]
+        end_frame = beat_frames[i + 1] if i + 1 < len(beat_frames) else chroma.shape[1]
+        segment_chroma = chroma[:, start_frame:end_frame].mean(axis=1)
+
+        # Normalize
+        norm = np.linalg.norm(segment_chroma)
+        if norm < 0.01:
+            continue  # silence
+        segment_chroma /= norm
+
+        # Find best matching chord
+        best_chord = "N"  # no chord
+        best_score = 0.3  # minimum threshold
+        for chord_name, template in _CHORD_TEMPLATES.items():
+            score = np.dot(segment_chroma, template / np.linalg.norm(template))
+            if score > best_score:
+                best_score = score
+                best_chord = chord_name
+
+        time_sec = round(librosa.frames_to_time(start_frame, sr=sr, hop_length=hop_length), 2)
+
+        # Only add if chord changed
+        if best_chord != prev_chord:
+            chords.append((time_sec, best_chord))
+            prev_chord = best_chord
+
+    # Write chord chart
+    chord_txt = output_dir / "chords.txt"
+    lines = ["CHORD PROGRESSION", "=" * 40, ""]
+    for time_sec, chord in chords:
+        mins = int(time_sec // 60)
+        secs = time_sec % 60
+        lines.append(f"  {mins}:{secs:05.2f}  {chord}")
+    lines.append("")
+    chord_txt.write_text("\n".join(lines))
+    print(f"  ✅ Chords detected — {len(chords)} changes → chords.txt")
+    return chords
+
+
+# ─────────────────────────────────────────────
+#  STEP 6 — SPEED / PITCH CONTROL
+# ─────────────────────────────────────────────
+
+def change_speed_pitch(audio_path: Path, output_dir: Path,
+                       speed: float = None, pitch_semitones: float = None) -> Path:
+    """Change speed and/or pitch of an audio file. Returns path to modified file."""
+    if speed is None and pitch_semitones is None:
+        return audio_path
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    y, sr = librosa.load(str(audio_path), sr=None, mono=False)
+
+    label_parts = []
+
+    if speed is not None and speed != 1.0:
+        print(f"  ⏩ Changing speed to {speed}x…")
+        if y.ndim == 1:
+            y = librosa.effects.time_stretch(y, rate=speed)
+        else:
+            # Process each channel
+            y = np.stack([librosa.effects.time_stretch(ch, rate=speed) for ch in y])
+        label_parts.append(f"{speed}x")
+
+    if pitch_semitones is not None and pitch_semitones != 0:
+        print(f"  🎼 Shifting pitch by {pitch_semitones:+.1f} semitones…")
+        if y.ndim == 1:
+            y = librosa.effects.pitch_shift(y, sr=sr, n_steps=pitch_semitones)
+        else:
+            y = np.stack([librosa.effects.pitch_shift(ch, sr=sr, n_steps=pitch_semitones) for ch in y])
+        label_parts.append(f"{pitch_semitones:+.0f}st")
+
+    label = "_".join(label_parts)
+    stem = audio_path.stem
+    out_path = output_dir / f"{stem}_{label}.wav"
+    audio_out = y.T if y.ndim > 1 else y
+    sf.write(str(out_path), audio_out, sr, subtype="PCM_24")
+    print(f"  ✅ Speed/pitch adjusted → {out_path.name}")
+    return out_path
+
+
+# ─────────────────────────────────────────────
 #  PROCESS SINGLE FILE
 # ─────────────────────────────────────────────
 
@@ -686,6 +811,9 @@ def process_file(
     reference_path: Path = None,
     quality: str = "good",
     max_stems: bool = False,
+    do_chords: bool = False,
+    speed: float = None,
+    pitch_semitones: float = None,
 ):
     if not audio_path.exists():
         print(f"  ❌ File not found: {audio_path}")
@@ -713,7 +841,17 @@ def process_file(
         remaster(audio_path, output_root)
 
     # BPM + key always written alongside remaster
-    detect_info(audio_path, output_root)
+    info = detect_info(audio_path, output_root)
+
+    # Chord detection
+    if do_chords:
+        detect_chords(audio_path, output_root, bpm=info.get("bpm", 120))
+
+    # Speed/pitch adjustment (applies to the remastered output)
+    if speed is not None or pitch_semitones is not None:
+        remaster_file = output_root / (audio_path.stem + "_RAWMASTER.wav")
+        if remaster_file.exists():
+            change_speed_pitch(remaster_file, output_root, speed=speed, pitch_semitones=pitch_semitones)
 
     stem_paths = {}
     if do_stems or do_midi or do_midi_all:
@@ -750,6 +888,12 @@ def main():
                         help="Reference track for mastering (match EQ + loudness + dynamics)")
     parser.add_argument("--quality", choices=["fast", "good", "best"], default="best",
                         help="Stem separation quality: fast (~5min), good (~15min), best (~30min, default)")
+    parser.add_argument("--chords", action="store_true",
+                        help="Detect chord progression and save to chords.txt")
+    parser.add_argument("--speed", type=float, metavar="X",
+                        help="Change playback speed (e.g. 0.8 = 80%%, 1.2 = 120%%)")
+    parser.add_argument("--pitch", type=float, metavar="N",
+                        help="Shift pitch in semitones (e.g. +2, -3)")
     parser.add_argument("--version", action="version", version=f"RAWMASTER {__version__}")
 
     args = parser.parse_args()
@@ -787,6 +931,9 @@ def main():
         print(f"  ❌ Reference file not found: {reference_path}")
         sys.exit(1)
     quality = args.quality
+    do_chords = args.chords
+    speed = args.speed
+    pitch_semitones = args.pitch
 
     # Batch mode (folder)
     if input_path.is_dir():
@@ -799,9 +946,9 @@ def main():
             sys.exit(1)
         print(f"  📂 Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
         for f in audio_files:
-            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems)
+            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems, do_chords, speed, pitch_semitones)
     else:
-        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems)
+        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems, do_chords, speed, pitch_semitones)
 
 
 if __name__ == "__main__":
