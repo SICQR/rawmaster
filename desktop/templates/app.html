@@ -1,191 +1,263 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAWMASTER</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            bg: '#131313',
-            surface: '#201f1f',
-            deep: '#0e0e0e',
-            accent: '#ff5638',
-            'accent-text': '#ffb4a5',
-            'txt': '#e5e2e1',
-            'txt-sec': '#e6bdb5',
-            border: 'rgba(93,64,58,0.4)',
-            success: '#4ade80',
-          },
-          fontFamily: {
-            heading: ['Space Grotesk', 'sans-serif'],
-            body: ['Inter', 'sans-serif'],
-            mono: ['Space Mono', 'monospace'],
-          },
-          borderRadius: {
-            none: '0',
-            sm: '2px',
-          }
-        }
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RAWMASTER</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "background": "#131313",
+        "surface": "#131313",
+        "surface-bright": "#3a3939",
+        "surface-dim": "#131313",
+        "surface-container-lowest": "#0e0e0e",
+        "surface-container-low": "#1c1b1b",
+        "surface-container": "#201f1f",
+        "surface-container-high": "#2a2a2a",
+        "surface-container-highest": "#353534",
+        "on-surface": "#e5e2e1",
+        "on-surface-variant": "#e6bdb5",
+        "primary": "#ffb4a5",
+        "primary-container": "#ff5638",
+        "on-primary": "#650900",
+        "on-primary-container": "#590700",
+        "secondary": "#c8c6c5",
+        "outline": "#ad8881",
+        "outline-variant": "#5d403a",
+        "signal-red": "#e63012",
+        "terminal-text": "#f0ece4",
+        "success": "#4ade80",
+      },
+      borderRadius: {
+        DEFAULT: "0.125rem",
+        lg: "0.25rem",
+        xl: "0.5rem",
+        full: "0.75rem"
+      },
+      fontFamily: {
+        headline: ["Space Grotesk"],
+        body: ["Inter"],
+        label: ["Space Grotesk"],
+        mono: ["Space Mono"]
       }
-    }
-  </script>
-  <style>
-    * { box-sizing: border-box; }
-    body { background: #131313; color: #e5e2e1; font-family: 'Inter', sans-serif; }
-    .label-mono { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #e6bdb5; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20; vertical-align: middle; }
-    input[type="number"] { -moz-appearance: textfield; }
-    input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    },
+  },
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+  }
+  .waveform-bar {
+    width: 2px;
+    background: currentColor;
+    margin-right: 1px;
+  }
+  .glow-signal {
+    box-shadow: 0 0 15px rgba(230, 48, 18, 0.3);
+  }
+  .glow-success {
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+  }
 
-    /* Custom radio/checkbox */
-    .rm-radio, .rm-check { display: none; }
-    .rm-radio + label, .rm-check + label {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 6px 14px; border: 1px solid rgba(93,64,58,0.4);
-      font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: #e6bdb5; cursor: pointer;
-      transition: all 0.15s ease; user-select: none; background: #0e0e0e;
-    }
-    .rm-radio:checked + label, .rm-check:checked + label {
-      background: #ff5638; color: #131313; border-color: #ff5638; font-weight: 700;
-    }
-    .rm-radio + label:hover, .rm-check + label:hover { border-color: #ff5638; }
+  /* Custom radio/checkbox - signal chain style */
+  .rm-radio, .rm-check { display: none; }
+  .rm-radio + label, .rm-check + label {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 6px 10px; border: 1px solid rgba(93,64,58,0.4);
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #e6bdb5; cursor: pointer;
+    transition: all 0.15s ease; user-select: none; background: #0e0e0e;
+  }
+  .rm-radio:checked + label, .rm-check:checked + label {
+    background: #ff5638; color: #131313; border-color: #ff5638; font-weight: 700;
+  }
+  .rm-radio + label:hover, .rm-check + label:hover { border-color: #ff5638; }
 
-    /* Progress bar */
-    .progress-fill {
-      background: linear-gradient(90deg, #ff5638 0%, #ff8a6a 100%);
-      transition: width 0.4s ease;
-    }
+  /* Progress bar */
+  .progress-fill {
+    background: linear-gradient(90deg, #ff5638 0%, #ff8a6a 100%);
+    transition: width 0.4s ease;
+  }
 
-    /* Pulse dot */
-    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+  /* Pulse dot */
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
 
-    /* Drag hover */
-    .drop-zone.drag-over { border-color: #ff5638 !important; background: rgba(255,86,56,0.06) !important; }
+  /* Green pulse */
+  @keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.5); } 50% { box-shadow: 0 0 8px 4px rgba(74,222,128,0); } }
+  .pulse-green { animation: pulse-green 2s ease-in-out infinite; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0e0e0e; }
-    ::-webkit-scrollbar-thumb { background: rgba(93,64,58,0.6); }
+  /* Drag hover */
+  .drop-zone.drag-over { border-color: #ff5638 !important; background: rgba(255,86,56,0.06) !important; }
 
-    /* Audio player */
-    audio { width: 100%; height: 40px; filter: hue-rotate(330deg) saturate(1.5) brightness(0.9); }
-    audio::-webkit-media-controls-panel { background: #201f1f; }
-  </style>
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0e0e0e; }
+  ::-webkit-scrollbar-thumb { background: rgba(93,64,58,0.6); }
+
+  /* Audio player */
+  audio { width: 100%; height: 40px; filter: hue-rotate(330deg) saturate(1.5) brightness(0.9); }
+  audio::-webkit-media-controls-panel { background: #201f1f; }
+
+  /* Number input cleanup */
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* Module collapse animation */
+  .module-content { transition: max-height 0.25s ease, opacity 0.2s ease; overflow: hidden; }
+  .module-content.collapsed { max-height: 0 !important; opacity: 0; }
+
+  /* Sidebar module active indicator */
+  .sidebar-module.active { border-left: 2px solid #ff5638; background: #201f1f; }
+  .sidebar-module { border-left: 2px solid transparent; }
+</style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
 
-  <!-- HEADER -->
-  <header class="border-b border-border px-6 py-3 flex items-center justify-between" style="background:#0e0e0e;">
-    <div class="flex items-center gap-4">
-      <h1 class="font-heading text-xl font-bold tracking-tight text-txt">
-        <span class="text-accent">RAW</span>MASTER
-      </h1>
-      <span class="label-mono opacity-50">v2.0</span>
-    </div>
-    <nav class="flex gap-0">
+<!-- ============ TOP NAV BAR ============ -->
+<nav class="flex justify-between items-center w-full px-6 h-14 bg-[#131313] border-b border-outline-variant/10 fixed top-0 z-50">
+  <div class="flex items-center gap-8">
+    <span class="text-xl font-bold tracking-tighter font-headline">
+      <span class="text-primary-container">RAW</span><span class="text-primary">MASTER</span>
+    </span>
+    <div class="hidden md:flex gap-1 items-center">
       <button id="tab-process" onclick="switchTab('process')"
-        class="tab-btn px-5 py-2 font-mono text-xs uppercase tracking-widest border border-border transition-all"
-        style="border-right:none;">
-        <span class="material-symbols-outlined text-sm mr-1">tune</span> PROCESS
+        class="tab-btn uppercase tracking-[0.15em] font-headline text-sm px-4 py-1 transition-all">
+        SESSIONS
       </button>
       <button id="tab-library" onclick="switchTab('library')"
-        class="tab-btn px-5 py-2 font-mono text-xs uppercase tracking-widest border border-border transition-all">
-        <span class="material-symbols-outlined text-sm mr-1">library_music</span> LIBRARY
+        class="tab-btn uppercase tracking-[0.15em] font-headline text-sm px-4 py-1 transition-all">
+        LIBRARY
       </button>
-    </nav>
-  </header>
+      <span class="uppercase tracking-[0.15em] font-headline text-sm text-on-surface-variant/30 px-4 py-1 cursor-default">PLUGINS</span>
+      <span class="uppercase tracking-[0.15em] font-headline text-sm text-on-surface-variant/30 px-4 py-1 cursor-default">EXPORT</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <span class="material-symbols-outlined text-on-surface-variant/60 cursor-pointer hover:text-primary text-xl">settings</span>
+    <span class="material-symbols-outlined text-on-surface-variant/60 cursor-pointer hover:text-primary text-xl">notifications</span>
+    <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+    </div>
+  </div>
+</nav>
 
-  <!-- MAIN CONTENT -->
-  <main class="flex-1 overflow-hidden">
+<!-- ============ MAIN LAYOUT ============ -->
+<div class="flex pt-14 h-screen overflow-hidden">
 
-    <!-- ====== VIEW: PROCESS ====== -->
-    <div id="view-process" class="h-full flex">
+  <!-- ============ LEFT SIDEBAR: SIGNAL CHAIN / CONTROLS ============ -->
+  <aside id="sidebar" class="hidden md:flex flex-col h-full w-72 py-4 px-0 bg-surface-container-lowest border-r border-outline-variant/10 shrink-0 overflow-y-auto">
+    <div class="px-5 mb-6">
+      <h3 class="uppercase tracking-widest font-headline text-[10px] text-primary">SIGNAL_CHAIN</h3>
+      <p class="font-mono text-[10px] text-on-surface-variant/50">v2.0_STABLE</p>
+    </div>
 
-      <!-- LEFT PANEL: Controls -->
-      <div class="w-[420px] min-w-[380px] border-r border-border overflow-y-auto p-5 flex flex-col gap-5" style="background:#0e0e0e;">
-
-        <!-- Upload Zone -->
-        <div>
-          <div class="label-mono mb-2">Input Track</div>
-          <div id="upload-zone" class="drop-zone border-2 border-dashed border-border p-6 flex flex-col items-center justify-center cursor-pointer transition-all hover:border-accent"
-               style="min-height:120px; background:#131313;">
-            <span class="material-symbols-outlined text-3xl text-accent-text opacity-60 mb-2">upload_file</span>
-            <span class="font-mono text-xs uppercase tracking-wider text-txt-sec">Drop audio file here</span>
-            <span class="text-[10px] text-txt-sec opacity-50 mt-1">MP3, WAV, FLAC, AIFF, OGG, M4A</span>
-          </div>
-          <input type="file" id="file-input" class="hidden" accept=".mp3,.wav,.flac,.aiff,.aif,.ogg,.m4a">
-          <!-- File info row (hidden by default) -->
-          <div id="file-info" class="hidden mt-2 px-3 py-2 flex items-center justify-between" style="background:#201f1f; border:1px solid rgba(93,64,58,0.4);">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="material-symbols-outlined text-sm text-success">audio_file</span>
-              <span id="file-name" class="font-mono text-xs text-txt truncate"></span>
-              <span id="file-size" class="label-mono opacity-50 whitespace-nowrap"></span>
-            </div>
-            <button onclick="clearFile()" class="ml-2 text-accent-text hover:text-accent transition-colors flex-shrink-0">
-              <span class="material-symbols-outlined text-sm">close</span>
-            </button>
-          </div>
+    <!-- Upload Module -->
+    <div class="sidebar-module active" data-module="upload">
+      <button onclick="toggleModule('upload')" class="w-full flex items-center gap-3 px-5 py-3 transition-all">
+        <span class="material-symbols-outlined text-sm text-primary">upload_file</span>
+        <span class="uppercase font-headline text-xs tracking-widest text-primary">INPUT_SOURCE</span>
+        <span class="material-symbols-outlined text-xs text-on-surface-variant/40 ml-auto module-chevron">expand_more</span>
+      </button>
+      <div class="module-content px-5 pb-4" data-module-body="upload" style="max-height:400px;">
+        <!-- Drop Zone -->
+        <div id="upload-zone" class="drop-zone border border-dashed border-outline-variant/30 p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:border-primary-container"
+             style="min-height:80px; background:#131313;">
+          <span class="material-symbols-outlined text-2xl text-primary/40 mb-1">cloud_upload</span>
+          <span class="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant/60">Drop audio file</span>
+          <span class="text-[9px] text-on-surface-variant/30 mt-1">MP3, WAV, FLAC, AIFF, OGG, M4A</span>
         </div>
-
-        <!-- Reference Track (optional) -->
-        <div>
-          <div class="label-mono mb-2">Reference Track <span class="opacity-50">(optional)</span></div>
-          <div id="ref-upload-zone" class="drop-zone border border-dashed border-border p-3 flex items-center justify-center cursor-pointer transition-all hover:border-accent"
-               style="min-height:48px; background:#131313;">
-            <span class="material-symbols-outlined text-sm text-accent-text opacity-40 mr-2">add_circle_outline</span>
-            <span class="font-mono text-[10px] uppercase tracking-wider text-txt-sec opacity-60">Drop reference</span>
+        <input type="file" id="file-input" class="hidden" accept=".mp3,.wav,.flac,.aiff,.aif,.ogg,.m4a">
+        <!-- File info -->
+        <div id="file-info" class="hidden mt-2 px-3 py-2 flex items-center justify-between bg-surface-container border border-outline-variant/20">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="material-symbols-outlined text-xs text-success">audio_file</span>
+            <span id="file-name" class="font-mono text-[10px] text-terminal-text truncate"></span>
+            <span id="file-size" class="font-mono text-[9px] text-on-surface-variant/40 whitespace-nowrap"></span>
+          </div>
+          <button onclick="clearFile()" class="ml-2 text-on-surface-variant/50 hover:text-primary-container transition-colors flex-shrink-0">
+            <span class="material-symbols-outlined text-xs">close</span>
+          </button>
+        </div>
+        <!-- Reference Track -->
+        <div class="mt-3">
+          <div class="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant/40 mb-1">Reference <span class="opacity-50">(optional)</span></div>
+          <div id="ref-upload-zone" class="drop-zone border border-dashed border-outline-variant/20 p-2 flex items-center justify-center cursor-pointer transition-all hover:border-primary-container"
+               style="min-height:36px; background:#131313;">
+            <span class="material-symbols-outlined text-xs text-on-surface-variant/30 mr-1">add_circle_outline</span>
+            <span class="font-mono text-[9px] uppercase tracking-wider text-on-surface-variant/40">Drop reference</span>
           </div>
           <input type="file" id="ref-file-input" class="hidden" accept=".mp3,.wav,.flac,.aiff,.aif,.ogg,.m4a">
-          <div id="ref-file-info" class="hidden mt-1 px-3 py-1 flex items-center justify-between" style="background:#201f1f; border:1px solid rgba(93,64,58,0.4);">
-            <span id="ref-file-name" class="font-mono text-[10px] text-txt truncate"></span>
-            <button onclick="clearRef()" class="ml-2 text-accent-text hover:text-accent transition-colors">
+          <div id="ref-file-info" class="hidden mt-1 px-2 py-1 flex items-center justify-between bg-surface-container border border-outline-variant/20">
+            <span id="ref-file-name" class="font-mono text-[9px] text-terminal-text truncate"></span>
+            <button onclick="clearRef()" class="ml-2 text-on-surface-variant/50 hover:text-primary-container transition-colors">
               <span class="material-symbols-outlined text-xs">close</span>
             </button>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Divider -->
-        <div class="border-t border-border"></div>
-
-        <!-- Stems -->
-        <div>
-          <div class="label-mono mb-2">Stems</div>
-          <div class="flex gap-0">
-            <input type="radio" name="stems" value="4" id="stems-4" class="rm-radio" checked>
-            <label for="stems-4" class="flex-1 text-center" style="border-right:none;">4</label>
-            <input type="radio" name="stems" value="6" id="stems-6" class="rm-radio">
-            <label for="stems-6" class="flex-1 text-center" style="border-right:none;">6</label>
-            <input type="radio" name="stems" value="max" id="stems-max" class="rm-radio">
-            <label for="stems-max" class="flex-1 text-center">MAX</label>
-          </div>
+    <!-- Stem Engine Module -->
+    <div class="sidebar-module" data-module="stems">
+      <button onclick="toggleModule('stems')" class="w-full flex items-center gap-3 px-5 py-3 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant transition-all">
+        <span class="material-symbols-outlined text-sm">settings_input_component</span>
+        <span class="uppercase font-headline text-xs tracking-widest">STEM_ENGINE</span>
+        <span class="material-symbols-outlined text-xs text-on-surface-variant/40 ml-auto module-chevron">expand_more</span>
+      </button>
+      <div class="module-content collapsed px-5 pb-4" data-module-body="stems" style="max-height:200px;">
+        <div class="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant/40 mb-2">Separation Count</div>
+        <div class="flex gap-0">
+          <input type="radio" name="stems" value="4" id="stems-4" class="rm-radio" checked>
+          <label for="stems-4" class="flex-1 text-center" style="border-right:none;">4</label>
+          <input type="radio" name="stems" value="6" id="stems-6" class="rm-radio">
+          <label for="stems-6" class="flex-1 text-center" style="border-right:none;">6</label>
+          <input type="radio" name="stems" value="max" id="stems-max" class="rm-radio">
+          <label for="stems-max" class="flex-1 text-center">MAX</label>
         </div>
+      </div>
+    </div>
 
-        <!-- Quality -->
-        <div>
-          <div class="label-mono mb-2">Quality</div>
-          <div class="flex gap-0">
-            <input type="radio" name="quality" value="fast" id="q-fast" class="rm-radio">
-            <label for="q-fast" class="flex-1 text-center" style="border-right:none;">FAST</label>
-            <input type="radio" name="quality" value="good" id="q-good" class="rm-radio">
-            <label for="q-good" class="flex-1 text-center" style="border-right:none;">GOOD</label>
-            <input type="radio" name="quality" value="best" id="q-best" class="rm-radio" checked>
-            <label for="q-best" class="flex-1 text-center">BEST</label>
-          </div>
+    <!-- Quality Protocol Module -->
+    <div class="sidebar-module" data-module="quality">
+      <button onclick="toggleModule('quality')" class="w-full flex items-center gap-3 px-5 py-3 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant transition-all">
+        <span class="material-symbols-outlined text-sm">compress</span>
+        <span class="uppercase font-headline text-xs tracking-widest">QUALITY_PROTOCOL</span>
+        <span class="material-symbols-outlined text-xs text-on-surface-variant/40 ml-auto module-chevron">expand_more</span>
+      </button>
+      <div class="module-content collapsed px-5 pb-4" data-module-body="quality" style="max-height:200px;">
+        <div class="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant/40 mb-2">Engine Quality</div>
+        <div class="flex gap-0">
+          <input type="radio" name="quality" value="fast" id="q-fast" class="rm-radio">
+          <label for="q-fast" class="flex-1 text-center" style="border-right:none;">FAST</label>
+          <input type="radio" name="quality" value="good" id="q-good" class="rm-radio">
+          <label for="q-good" class="flex-1 text-center" style="border-right:none;">GOOD</label>
+          <input type="radio" name="quality" value="best" id="q-best" class="rm-radio" checked>
+          <label for="q-best" class="flex-1 text-center">BEST</label>
         </div>
+      </div>
+    </div>
 
-        <!-- Checkboxes Row -->
-        <div class="flex gap-4">
+    <!-- MIDI Extraction Module -->
+    <div class="sidebar-module" data-module="midi">
+      <button onclick="toggleModule('midi')" class="w-full flex items-center gap-3 px-5 py-3 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant transition-all">
+        <span class="material-symbols-outlined text-sm">piano</span>
+        <span class="uppercase font-headline text-xs tracking-widest">MIDI_EXTRACTION</span>
+        <span class="material-symbols-outlined text-xs text-on-surface-variant/40 ml-auto module-chevron">expand_more</span>
+      </button>
+      <div class="module-content collapsed px-5 pb-4" data-module-body="midi" style="max-height:200px;">
+        <div class="flex gap-3">
           <div class="flex-1">
             <input type="checkbox" id="opt-midi" class="rm-check" checked>
             <label for="opt-midi" class="w-full text-center">MIDI</label>
@@ -195,70 +267,116 @@
             <label for="opt-chords" class="w-full text-center">CHORDS</label>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Speed / Pitch -->
-        <div class="flex gap-4">
+    <!-- Speed / Pitch Module -->
+    <div class="sidebar-module" data-module="speed">
+      <button onclick="toggleModule('speed')" class="w-full flex items-center gap-3 px-5 py-3 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant transition-all">
+        <span class="material-symbols-outlined text-sm">speed</span>
+        <span class="uppercase font-headline text-xs tracking-widest">TEMPO_WARP</span>
+        <span class="material-symbols-outlined text-xs text-on-surface-variant/40 ml-auto module-chevron">expand_more</span>
+      </button>
+      <div class="module-content collapsed px-5 pb-4" data-module-body="speed" style="max-height:200px;">
+        <div class="flex gap-3">
           <div class="flex-1">
-            <div class="label-mono mb-2">Speed</div>
+            <div class="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant/40 mb-1">Speed</div>
             <input type="number" id="opt-speed" value="1.0" step="0.05" min="0.25" max="4.0"
-              class="w-full px-3 py-2 font-mono text-sm text-txt border border-border focus:border-accent focus:outline-none transition-colors"
-              style="background:#131313;">
+              class="w-full px-2 py-1.5 font-mono text-xs text-terminal-text border border-outline-variant/30 focus:border-primary focus:outline-none transition-colors bg-surface-container-lowest">
           </div>
           <div class="flex-1">
-            <div class="label-mono mb-2">Pitch <span class="opacity-50">(semitones)</span></div>
+            <div class="font-mono text-[9px] uppercase tracking-widest text-on-surface-variant/40 mb-1">Pitch (st)</div>
             <input type="number" id="opt-pitch" value="0" step="1" min="-12" max="12"
-              class="w-full px-3 py-2 font-mono text-sm text-txt border border-border focus:border-accent focus:outline-none transition-colors"
-              style="background:#131313;">
+              class="w-full px-2 py-1.5 font-mono text-xs text-terminal-text border border-outline-variant/30 focus:border-primary focus:outline-none transition-colors bg-surface-container-lowest">
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Format -->
-        <div>
-          <div class="label-mono mb-2">Output Format</div>
-          <div class="flex gap-0">
-            <input type="radio" name="format" value="wav24" id="f-wav24" class="rm-radio" checked>
-            <label for="f-wav24" class="flex-1 text-center" style="border-right:none;">WAV24</label>
-            <input type="radio" name="format" value="wav32" id="f-wav32" class="rm-radio">
-            <label for="f-wav32" class="flex-1 text-center" style="border-right:none;">WAV32</label>
-            <input type="radio" name="format" value="aiff" id="f-aiff" class="rm-radio">
-            <label for="f-aiff" class="flex-1 text-center" style="border-right:none;">AIFF</label>
-            <input type="radio" name="format" value="mp3" id="f-mp3" class="rm-radio">
-            <label for="f-mp3" class="flex-1 text-center">MP3</label>
-          </div>
+    <!-- Output Format Module -->
+    <div class="sidebar-module" data-module="format">
+      <button onclick="toggleModule('format')" class="w-full flex items-center gap-3 px-5 py-3 text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant transition-all">
+        <span class="material-symbols-outlined text-sm">audio_file</span>
+        <span class="uppercase font-headline text-xs tracking-widest">OUTPUT_FORMAT</span>
+        <span class="material-symbols-outlined text-xs text-on-surface-variant/40 ml-auto module-chevron">expand_more</span>
+      </button>
+      <div class="module-content collapsed px-5 pb-4" data-module-body="format" style="max-height:200px;">
+        <div class="flex gap-0 mb-3">
+          <input type="radio" name="format" value="wav24" id="f-wav24" class="rm-radio" checked>
+          <label for="f-wav24" class="flex-1 text-center" style="border-right:none;">WAV24</label>
+          <input type="radio" name="format" value="wav32" id="f-wav32" class="rm-radio">
+          <label for="f-wav32" class="flex-1 text-center" style="border-right:none;">WAV32</label>
+          <input type="radio" name="format" value="aiff" id="f-aiff" class="rm-radio">
+          <label for="f-aiff" class="flex-1 text-center" style="border-right:none;">AIFF</label>
+          <input type="radio" name="format" value="mp3" id="f-mp3" class="rm-radio">
+          <label for="f-mp3" class="flex-1 text-center">MP3</label>
         </div>
-
-        <!-- BPM Filename -->
         <div>
           <input type="checkbox" id="opt-bpm-filename" class="rm-check">
-          <label for="opt-bpm-filename" class="w-full text-center">BPM IN FILENAME</label>
+          <label for="opt-bpm-filename" class="w-full text-center text-[9px]">BPM IN FILENAME</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spacer -->
+    <div class="flex-1"></div>
+
+    <!-- PROCESS BUTTON -->
+    <div class="px-4 pb-4 pt-4 border-t border-outline-variant/10">
+      <button id="btn-process" onclick="startProcess()" disabled
+        class="w-full py-3 font-headline font-bold text-sm uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-primary-container text-on-primary hover:brightness-110 active:scale-[0.98]">
+        <span class="material-symbols-outlined text-lg mr-1 align-middle">bolt</span>
+        RAWMASTER_IT
+      </button>
+    </div>
+
+    <!-- Bottom sidebar links -->
+    <div class="flex flex-col gap-1 border-t border-outline-variant/10 pt-3 pb-2">
+      <button class="flex items-center gap-3 px-5 py-2 text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors">
+        <span class="material-symbols-outlined text-sm">terminal</span>
+        <span class="uppercase font-headline text-[10px] tracking-widest">SYSTEM_LOG</span>
+      </button>
+      <button class="flex items-center gap-3 px-5 py-2 text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors">
+        <span class="material-symbols-outlined text-sm">query_stats</span>
+        <span class="uppercase font-headline text-[10px] tracking-widest">ANALYTICS</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN CONTENT CANVAS ============ -->
+  <main class="flex-1 overflow-y-auto bg-surface-container-lowest">
+
+    <!-- ====== VIEW: PROCESS ====== -->
+    <div id="view-process" class="h-full">
+      <div class="p-6 max-w-6xl mx-auto flex flex-col gap-6">
+
+        <!-- ====== UPLOAD STATE (empty state) ====== -->
+        <div id="empty-state" class="flex-1 flex flex-col items-center justify-center py-24">
+          <div class="mb-8 relative">
+            <span class="material-symbols-outlined text-8xl text-primary/20">graphic_eq</span>
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-primary-container/20"></div>
+          </div>
+          <span class="font-headline text-lg uppercase tracking-[0.2em] text-on-surface-variant/60">Upload a track to begin</span>
+          <span class="font-mono text-[10px] text-on-surface-variant/30 mt-2">Drag & drop into INPUT_SOURCE or click the upload zone</span>
+          <span class="font-mono text-[10px] text-on-surface-variant/20 mt-1">CMD+Enter to process</span>
         </div>
 
-        <!-- Spacer -->
-        <div class="flex-1"></div>
-
-        <!-- PROCESS BUTTON -->
-        <button id="btn-process" onclick="startProcess()" disabled
-          class="w-full py-4 font-heading font-bold text-lg uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          style="background:#ff5638; color:#131313; border:none;">
-          <span class="material-symbols-outlined text-xl mr-2 align-middle">bolt</span>
-          RAWMASTER_IT
-        </button>
-
-      </div>
-
-      <!-- RIGHT PANEL: Results -->
-      <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-5" style="background:#131313;">
-
-        <!-- Status Section -->
+        <!-- ====== STATUS SECTION (during processing) ====== -->
         <div id="status-section" class="hidden">
-          <div class="flex items-center gap-3 mb-3">
-            <div id="status-dot" class="w-2 h-2 rounded-full bg-success pulse-dot"></div>
-            <span id="status-text" class="font-mono text-xs uppercase tracking-widest text-success">Processing</span>
-            <span id="status-filename" class="font-mono text-xs text-txt-sec opacity-60 ml-auto truncate"></span>
+          <!-- Status bar with green/red border -->
+          <div id="status-bar" class="bg-surface-container-high p-4 flex items-center justify-between border-b-2 border-primary-container mb-4">
+            <div class="flex items-center gap-3">
+              <span class="flex h-3 w-3 relative">
+                <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-container opacity-75"></span>
+                <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3 bg-primary-container"></span>
+              </span>
+              <span id="status-text" class="font-mono text-sm tracking-widest text-primary-container uppercase">Processing</span>
+            </div>
+            <span id="status-filename" class="font-mono text-xs text-on-surface-variant/60 truncate ml-4"></span>
           </div>
 
           <!-- Progress Bar -->
-          <div class="w-full h-2 mb-4" style="background:#201f1f;">
+          <div class="w-full h-2 mb-4 bg-surface-container">
             <div id="progress-bar" class="progress-fill h-full" style="width:0%;"></div>
           </div>
 
@@ -266,518 +384,684 @@
           <div id="steps-list" class="flex flex-col gap-1 mb-4"></div>
         </div>
 
-        <!-- Error Display -->
-        <div id="error-display" class="hidden p-4 border border-red-600" style="background:rgba(255,0,0,0.08);">
+        <!-- ====== ERROR DISPLAY ====== -->
+        <div id="error-display" class="hidden p-4 border border-red-600/40 bg-red-900/10">
           <div class="flex items-center gap-2 mb-1">
-            <span class="material-symbols-outlined text-red-500">error</span>
-            <span class="font-mono text-xs uppercase tracking-widest text-red-500">Error</span>
+            <span class="material-symbols-outlined text-red-500 text-sm">error</span>
+            <span class="font-mono text-[10px] uppercase tracking-widest text-red-500">ERROR</span>
           </div>
-          <p id="error-text" class="font-body text-sm text-red-400"></p>
+          <p id="error-text" class="font-mono text-xs text-red-400"></p>
         </div>
 
-        <!-- Results Section -->
-        <div id="results-section" class="hidden flex flex-col gap-5">
+        <!-- ====== RESULTS SECTION (Stitch-style) ====== -->
+        <div id="results-section" class="hidden flex flex-col gap-6">
 
-          <!-- Info Row -->
-          <div id="info-row" class="hidden flex gap-3 flex-wrap">
-            <div class="px-4 py-3 border border-border flex-1 min-w-[100px]" style="background:#201f1f;">
-              <div class="label-mono mb-1">BPM</div>
-              <div id="info-bpm" class="font-heading text-2xl font-bold text-accent">--</div>
+          <!-- Row 1: Config Log + Peak Meters side by side -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Config Log (left) -->
+            <div class="lg:col-span-5">
+              <section class="bg-surface-container p-5 border-l-2 border-primary/20 h-full">
+                <header class="flex justify-between items-end mb-4">
+                  <div>
+                    <h2 class="font-headline uppercase tracking-[0.2em] text-[10px] text-primary/70">INPUT_SOURCE</h2>
+                    <p id="config-filename" class="font-mono text-sm text-terminal-text truncate"></p>
+                  </div>
+                  <span class="material-symbols-outlined text-primary/50 text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                </header>
+                <!-- Mini Waveform -->
+                <div class="h-16 w-full bg-surface-container-lowest flex items-center justify-center relative overflow-hidden mb-4">
+                  <div class="absolute inset-0 flex items-center justify-center px-3 gap-[2px] opacity-40 text-primary">
+                    <div class="waveform-bar h-6"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-6"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-6"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-8"></div>
+                  </div>
+                </div>
+                <!-- Configuration Grid -->
+                <h3 class="font-headline uppercase tracking-widest text-[9px] text-on-surface-variant/60 mb-2">CONFIGURATION_LOG</h3>
+                <div id="config-grid" class="grid grid-cols-2 gap-2">
+                  <div class="bg-surface-container-low p-2.5">
+                    <p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">Stem Separation</p>
+                    <p id="cfg-stems" class="font-mono text-xs text-primary">--</p>
+                  </div>
+                  <div class="bg-surface-container-low p-2.5">
+                    <p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">Engine Quality</p>
+                    <p id="cfg-quality" class="font-mono text-xs text-primary uppercase">--</p>
+                  </div>
+                  <div class="bg-surface-container-low p-2.5">
+                    <p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">MIDI Extraction</p>
+                    <p id="cfg-midi" class="font-mono text-xs text-primary uppercase">--</p>
+                  </div>
+                  <div class="bg-surface-container-low p-2.5">
+                    <p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">Output Format</p>
+                    <p id="cfg-format" class="font-mono text-xs text-primary uppercase">--</p>
+                  </div>
+                </div>
+              </section>
             </div>
-            <div class="px-4 py-3 border border-border flex-1 min-w-[100px]" style="background:#201f1f;">
-              <div class="label-mono mb-1">Key</div>
-              <div id="info-key" class="font-heading text-2xl font-bold text-accent-text">--</div>
-            </div>
-            <div class="px-4 py-3 border border-border flex-[2] min-w-[180px]" style="background:#201f1f;">
-              <div class="label-mono mb-1">Chords</div>
-              <div id="info-chords" class="font-mono text-sm text-txt-sec mt-1">--</div>
+
+            <!-- Peak Meters + Processor Active (right) -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+              <!-- Processor Active -->
+              <div class="bg-surface-container-lowest p-5 border border-outline-variant/10">
+                <div class="flex items-center gap-4 mb-4">
+                  <div class="w-12 h-1 bg-signal-red glow-signal"></div>
+                  <span class="font-mono text-[10px] uppercase tracking-tighter text-signal-red">Processor Active</span>
+                </div>
+                <div class="space-y-2 opacity-60">
+                  <div class="flex justify-between font-mono text-[9px]">
+                    <span>L_PEAK</span>
+                    <span id="peak-l">-2.4 dB</span>
+                  </div>
+                  <div class="w-full bg-surface-container h-1.5">
+                    <div id="peak-l-bar" class="bg-primary h-full transition-all" style="width:85%"></div>
+                  </div>
+                  <div class="flex justify-between font-mono text-[9px]">
+                    <span>R_PEAK</span>
+                    <span id="peak-r">-2.6 dB</span>
+                  </div>
+                  <div class="w-full bg-surface-container h-1.5">
+                    <div id="peak-r-bar" class="bg-primary h-full transition-all" style="width:82%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Complete Banner -->
+              <div id="done-banner" class="hidden bg-surface-container-high p-4 flex items-center justify-between border-b-2 border-success">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
+                  </span>
+                  <span class="font-mono text-sm tracking-widest text-success">DONE: MASTERING_PROTOCOL_COMPLETE</span>
+                </div>
+                <span id="done-timestamp" class="font-mono text-[10px] text-on-surface-variant/60"></span>
+              </div>
             </div>
           </div>
 
-          <!-- Audio Player -->
+          <!-- Row 2: Audio Player -->
           <div id="player-section" class="hidden">
-            <div class="label-mono mb-2">
-              <span class="material-symbols-outlined text-sm mr-1 text-accent">play_circle</span>
-              Remastered Preview
-            </div>
-            <div class="p-3 border border-border" style="background:#201f1f;">
-              <audio id="audio-player" controls preload="none"></audio>
-            </div>
+            <section class="bg-surface-container-high p-6 relative overflow-hidden">
+              <!-- Gradient top border -->
+              <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20"></div>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h2 id="player-title" class="font-headline uppercase tracking-[0.15em] text-base text-terminal-text">Remastered Output</h2>
+                  <p class="font-mono text-[10px] text-primary/60">AI_ASSISTED_MASTERING // RAWMASTER_ENGINE</p>
+                </div>
+              </div>
+              <!-- Main Waveform Visualization -->
+              <div class="relative h-32 w-full bg-surface-container-lowest/50 mb-4 px-4 flex items-center gap-[3px]">
+                <div class="flex-1 flex items-center h-full gap-[2px]" id="waveform-vis">
+                  <div class="w-1 bg-primary/20 h-8"></div><div class="w-1 bg-primary/20 h-16"></div><div class="w-1 bg-primary/20 h-12"></div><div class="w-1 bg-primary/20 h-24"></div><div class="w-1 bg-primary h-28"></div><div class="w-1 bg-primary h-24"></div><div class="w-1 bg-primary h-32"></div><div class="w-1 bg-primary h-20"></div><div class="w-1 bg-primary h-32"></div><div class="w-1 bg-primary h-28"></div><div class="w-1 bg-primary h-24"></div><div class="w-1 bg-primary h-32"></div><div class="w-1 bg-primary h-28"></div><div class="w-1 bg-primary h-22"></div><div class="w-1 bg-primary h-28"></div><div class="w-1 bg-primary/40 h-20"></div><div class="w-1 bg-primary/40 h-16"></div><div class="w-1 bg-primary/40 h-18"></div><div class="w-1 bg-primary/40 h-10"></div><div class="w-1 bg-primary/40 h-14"></div><div class="w-1 bg-primary/40 h-16"></div><div class="w-1 bg-primary/40 h-10"></div><div class="w-1 bg-primary/40 h-8"></div><div class="w-1 bg-primary/40 h-12"></div><div class="w-1 bg-primary/40 h-6"></div><div class="w-1 bg-primary/40 h-10"></div>
+                </div>
+                <!-- Scrubber -->
+                <div class="absolute left-[40%] top-0 bottom-0 w-[2px] bg-signal-red z-10 glow-signal">
+                  <div class="absolute -top-1 -left-1 w-3 h-3 bg-signal-red"></div>
+                </div>
+              </div>
+              <!-- Native Audio Player -->
+              <div class="bg-surface-container p-3">
+                <audio id="audio-player" controls preload="none"></audio>
+              </div>
+            </section>
           </div>
 
-          <!-- Download Buttons -->
+          <!-- Row 3: Metadata Cards (BPM, Key, Confidence, Chords) -->
+          <div id="info-row" class="hidden">
+            <section class="grid grid-cols-2 md:grid-cols-4 gap-px bg-outline-variant/20">
+              <div class="bg-surface-container p-4">
+                <p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Detected BPM</p>
+                <p id="info-bpm" class="font-mono text-xl text-terminal-text">--</p>
+              </div>
+              <div class="bg-surface-container p-4">
+                <p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Harmonic Key</p>
+                <p id="info-key" class="font-mono text-xl text-signal-red">--</p>
+              </div>
+              <div class="bg-surface-container p-4">
+                <p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Confidence Score</p>
+                <p id="info-confidence" class="font-mono text-xl text-terminal-text">--</p>
+              </div>
+              <div class="bg-surface-container p-4">
+                <p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Chord Chain</p>
+                <p id="info-chords" class="font-mono text-sm text-primary tracking-tighter mt-1">--</p>
+              </div>
+            </section>
+          </div>
+
+          <!-- Row 4: Asset Export Bundles (chunky download cards) -->
           <div id="download-section" class="hidden">
-            <div class="label-mono mb-2">Downloads</div>
-            <div class="flex gap-3 flex-wrap">
-              <a id="dl-remaster" href="#" class="hidden flex items-center gap-2 px-5 py-3 font-mono text-xs uppercase tracking-widest transition-all hover:brightness-110"
-                 style="background:#ff5638; color:#131313; text-decoration:none; font-weight:700;">
-                <span class="material-symbols-outlined text-sm">download</span>
-                Mastered Track
-              </a>
-              <a id="dl-stems" href="#" class="hidden flex items-center gap-2 px-5 py-3 font-mono text-xs uppercase tracking-widest border border-border hover:border-accent transition-all text-txt-sec hover:text-accent-text"
-                 style="background:#201f1f; text-decoration:none;">
-                <span class="material-symbols-outlined text-sm">download</span>
-                Stems ZIP
-              </a>
-              <a id="dl-midi" href="#" class="hidden flex items-center gap-2 px-5 py-3 font-mono text-xs uppercase tracking-widest border border-border hover:border-accent transition-all text-txt-sec hover:text-accent-text"
-                 style="background:#201f1f; text-decoration:none;">
-                <span class="material-symbols-outlined text-sm">download</span>
-                MIDI ZIP
-              </a>
+            <div class="bg-surface-container-low p-6 border border-outline-variant/10">
+              <div class="flex items-center gap-4 mb-5">
+                <span class="material-symbols-outlined text-primary">download</span>
+                <h3 class="font-headline uppercase tracking-widest text-sm text-terminal-text">ASSET_EXPORT_BUNDLES</h3>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Mastered Track Card -->
+                <a id="dl-remaster" href="#" class="hidden flex flex-col items-start p-4 bg-primary-container text-on-primary hover:brightness-110 transition-all group no-underline">
+                  <span class="font-headline font-bold text-xs uppercase mb-2">Mastered Track</span>
+                  <span class="font-mono text-[10px] mb-4 opacity-80">RAW_PCM // REMASTERED</span>
+                  <div class="w-full flex justify-between items-center mt-auto">
+                    <span class="font-mono text-xs font-bold">Download</span>
+                    <span class="material-symbols-outlined group-hover:translate-y-1 transition-transform">download_for_offline</span>
+                  </div>
+                </a>
+                <!-- Stems Card -->
+                <a id="dl-stems" href="#" class="hidden flex flex-col items-start p-4 bg-surface-container-high border border-outline-variant/30 hover:border-primary/50 transition-all group no-underline">
+                  <span class="font-headline font-bold text-xs uppercase mb-2 text-on-surface-variant">Separated Audio</span>
+                  <span class="font-mono text-[10px] mb-4 text-on-surface-variant/50">STEM_ARCHIVE</span>
+                  <div class="w-full flex justify-between items-center mt-auto">
+                    <span class="font-mono text-xs text-terminal-text">Stems (ZIP)</span>
+                    <span class="material-symbols-outlined text-primary group-hover:translate-y-1 transition-transform">folder_zip</span>
+                  </div>
+                </a>
+                <!-- MIDI Card -->
+                <a id="dl-midi" href="#" class="hidden flex flex-col items-start p-4 bg-surface-container-high border border-outline-variant/30 hover:border-primary/50 transition-all group no-underline">
+                  <span class="font-headline font-bold text-xs uppercase mb-2 text-on-surface-variant">Extracted Theory</span>
+                  <span class="font-mono text-[10px] mb-4 text-on-surface-variant/50">MIDI_AND_METADATA</span>
+                  <div class="w-full flex justify-between items-center mt-auto">
+                    <span class="font-mono text-xs text-terminal-text">MIDI (ZIP)</span>
+                    <span class="material-symbols-outlined text-primary group-hover:translate-y-1 transition-transform">data_object</span>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
 
-        </div>
-
-        <!-- Empty State -->
-        <div id="empty-state" class="flex-1 flex flex-col items-center justify-center opacity-30">
-          <span class="material-symbols-outlined text-6xl text-accent-text mb-4">graphic_eq</span>
-          <span class="font-heading text-lg uppercase tracking-widest text-txt-sec">Upload a track to begin</span>
-          <span class="font-mono text-xs text-txt-sec mt-2 opacity-60">Drag & drop or click the upload zone</span>
-        </div>
+        </div><!-- end results-section -->
 
       </div>
     </div>
 
     <!-- ====== VIEW: LIBRARY ====== -->
-    <div id="view-library" class="h-full hidden overflow-y-auto p-6" style="background:#131313;">
-
-      <div class="flex items-center justify-between mb-5">
-        <div>
-          <h2 class="font-heading text-lg font-bold text-txt uppercase tracking-wider">
-            <span class="material-symbols-outlined text-xl mr-1 text-accent align-middle">library_music</span>
-            Track Library
-          </h2>
-          <p class="label-mono mt-1 opacity-50">Previously processed tracks</p>
+    <div id="view-library" class="h-full hidden overflow-y-auto p-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="font-headline text-lg font-bold text-terminal-text uppercase tracking-wider">
+              <span class="material-symbols-outlined text-xl mr-1 text-primary align-middle">library_music</span>
+              Track Library
+            </h2>
+            <p class="font-mono text-[10px] text-on-surface-variant/50 uppercase tracking-widest mt-1">Previously processed tracks</p>
+          </div>
+          <button onclick="loadLibrary()" class="px-4 py-2 border border-outline-variant/30 font-mono text-[10px] uppercase tracking-widest text-on-surface-variant/60 hover:border-primary hover:text-primary transition-all bg-surface-container">
+            <span class="material-symbols-outlined text-sm mr-1">refresh</span> Refresh
+          </button>
         </div>
-        <button onclick="loadLibrary()" class="px-4 py-2 border border-border font-mono text-xs uppercase tracking-widest text-txt-sec hover:border-accent hover:text-accent-text transition-all"
-                style="background:#201f1f;">
-          <span class="material-symbols-outlined text-sm mr-1">refresh</span> Refresh
-        </button>
-      </div>
 
-      <!-- Library Table -->
-      <div class="border border-border" style="background:#0e0e0e;">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-border" style="background:#201f1f;">
-              <th class="label-mono text-left px-4 py-3">Name</th>
-              <th class="label-mono text-center px-4 py-3 w-20">BPM</th>
-              <th class="label-mono text-center px-4 py-3 w-20">Key</th>
-              <th class="label-mono text-center px-4 py-3 w-20">Stems</th>
-              <th class="label-mono text-center px-4 py-3 w-20">MIDI</th>
-              <th class="label-mono text-center px-4 py-3 w-20">Chords</th>
-              <th class="label-mono text-center px-4 py-3 w-24">Remaster</th>
-            </tr>
-          </thead>
-          <tbody id="library-body">
-            <tr>
-              <td colspan="7" class="text-center py-12 opacity-40">
-                <span class="font-mono text-xs uppercase tracking-widest text-txt-sec">Loading library...</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <!-- Library Table -->
+        <div class="border border-outline-variant/10 bg-surface-container-lowest">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-outline-variant/10 bg-surface-container">
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-left px-4 py-3">Name</th>
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-center px-4 py-3 w-20">BPM</th>
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-center px-4 py-3 w-20">Key</th>
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-center px-4 py-3 w-20">Stems</th>
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-center px-4 py-3 w-20">MIDI</th>
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-center px-4 py-3 w-20">Chords</th>
+                <th class="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant/50 text-center px-4 py-3 w-24">Remaster</th>
+              </tr>
+            </thead>
+            <tbody id="library-body">
+              <tr>
+                <td colspan="7" class="text-center py-12 opacity-40">
+                  <span class="font-mono text-xs uppercase tracking-widest text-on-surface-variant/50">Loading library...</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      <!-- Library Empty State -->
-      <div id="library-empty" class="hidden text-center py-16 opacity-40">
-        <span class="material-symbols-outlined text-5xl text-accent-text mb-3">folder_off</span>
-        <p class="font-mono text-xs uppercase tracking-widest text-txt-sec">No processed tracks found</p>
-        <p class="font-mono text-[10px] text-txt-sec mt-1 opacity-60">Process a track first and it will appear here</p>
+        <!-- Library Empty State -->
+        <div id="library-empty" class="hidden text-center py-16 opacity-40">
+          <span class="material-symbols-outlined text-5xl text-primary/30 mb-3">folder_off</span>
+          <p class="font-mono text-xs uppercase tracking-widest text-on-surface-variant/50">No processed tracks found</p>
+          <p class="font-mono text-[10px] text-on-surface-variant/30 mt-1">Process a track first and it will appear here</p>
+        </div>
       </div>
     </div>
 
   </main>
+</div>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-border px-6 py-2 flex items-center justify-between" style="background:#0e0e0e;">
-    <span class="font-mono text-[10px] text-txt-sec opacity-40">&copy; 2026 Smash Daddys / Raw Convict Records</span>
-    <span class="font-mono text-[10px] text-txt-sec opacity-40">localhost:7860</span>
-  </footer>
+<!-- ============ FLOATING SYSTEM STATUS (bottom-right) ============ -->
+<div class="fixed bottom-6 right-6 pointer-events-none z-40">
+  <div class="bg-surface-container-lowest/80 backdrop-blur-xl p-3 border-l border-signal-red/50">
+    <p id="system-status" class="font-mono text-[9px] text-signal-red leading-tight">SYSTEM_STATUS: IDLE<br>UPTIME: 00:00:00<br>BUF_SIZE: 512_SAMP</p>
+  </div>
+</div>
 
-  <!-- ====== JAVASCRIPT ====== -->
-  <script>
-    // ---- STATE ----
-    let currentJobId = null;
-    let pollInterval = null;
-    let uploadedFile = null;
-    let refFile = null;
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+  // ---- STATE ----
+  let currentJobId = null;
+  let pollInterval = null;
+  let uploadedFile = null;
+  let refFile = null;
+  let uptimeSeconds = 0;
 
-    // ---- TAB SWITCHING ----
-    function switchTab(tab) {
-      const processView = document.getElementById('view-process');
-      const libraryView = document.getElementById('view-library');
-      const tabProcess = document.getElementById('tab-process');
-      const tabLibrary = document.getElementById('tab-library');
+  // ---- UPTIME COUNTER ----
+  setInterval(() => {
+    uptimeSeconds++;
+    const h = String(Math.floor(uptimeSeconds / 3600)).padStart(2, '0');
+    const m = String(Math.floor((uptimeSeconds % 3600) / 60)).padStart(2, '0');
+    const s = String(uptimeSeconds % 60).padStart(2, '0');
+    const el = document.getElementById('system-status');
+    if (el) el.innerHTML = `SYSTEM_STATUS: ${currentJobId && pollInterval ? 'PROCESSING' : 'IDLE'}<br>UPTIME: ${h}:${m}:${s}<br>BUF_SIZE: 512_SAMP`;
+  }, 1000);
 
-      if (tab === 'process') {
-        processView.classList.remove('hidden');
-        libraryView.classList.add('hidden');
-        tabProcess.style.background = '#ff5638';
-        tabProcess.style.color = '#131313';
-        tabProcess.style.fontWeight = '700';
-        tabLibrary.style.background = '#0e0e0e';
-        tabLibrary.style.color = '#e6bdb5';
-        tabLibrary.style.fontWeight = '400';
-      } else {
-        processView.classList.add('hidden');
-        libraryView.classList.remove('hidden');
-        tabLibrary.style.background = '#ff5638';
-        tabLibrary.style.color = '#131313';
-        tabLibrary.style.fontWeight = '700';
-        tabProcess.style.background = '#0e0e0e';
-        tabProcess.style.color = '#e6bdb5';
-        tabProcess.style.fontWeight = '400';
-        loadLibrary();
-      }
+  // ---- MODULE TOGGLE ----
+  function toggleModule(name) {
+    const body = document.querySelector(`[data-module-body="${name}"]`);
+    if (!body) return;
+    body.classList.toggle('collapsed');
+    // Update chevron
+    const module = document.querySelector(`[data-module="${name}"]`);
+    if (module) {
+      const chevron = module.querySelector('.module-chevron');
+      if (chevron) chevron.textContent = body.classList.contains('collapsed') ? 'expand_more' : 'expand_less';
     }
+  }
 
-    // Init tabs
-    switchTab('process');
+  // ---- TAB SWITCHING ----
+  function switchTab(tab) {
+    const processView = document.getElementById('view-process');
+    const libraryView = document.getElementById('view-library');
+    const tabProcess = document.getElementById('tab-process');
+    const tabLibrary = document.getElementById('tab-library');
 
-    // ---- FILE UPLOAD (main) ----
-    const uploadZone = document.getElementById('upload-zone');
-    const fileInput = document.getElementById('file-input');
+    if (tab === 'process') {
+      processView.classList.remove('hidden');
+      libraryView.classList.add('hidden');
+      tabProcess.className = 'tab-btn uppercase tracking-[0.15em] font-headline text-sm px-4 py-1 transition-all text-primary border-b border-primary';
+      tabLibrary.className = 'tab-btn uppercase tracking-[0.15em] font-headline text-sm px-4 py-1 transition-all text-on-surface-variant/60 hover:text-primary';
+    } else {
+      processView.classList.add('hidden');
+      libraryView.classList.remove('hidden');
+      tabLibrary.className = 'tab-btn uppercase tracking-[0.15em] font-headline text-sm px-4 py-1 transition-all text-primary border-b border-primary';
+      tabProcess.className = 'tab-btn uppercase tracking-[0.15em] font-headline text-sm px-4 py-1 transition-all text-on-surface-variant/60 hover:text-primary';
+      loadLibrary();
+    }
+  }
 
-    uploadZone.addEventListener('click', () => fileInput.click());
-    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-    uploadZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadZone.classList.remove('drag-over');
-      if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
-    });
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) handleFileSelect(fileInput.files[0]);
-    });
+  // Init tabs
+  switchTab('process');
 
-    function handleFileSelect(file) {
-      const valid = ['.mp3','.wav','.flac','.aiff','.aif','.ogg','.m4a'];
-      const ext = '.' + file.name.split('.').pop().toLowerCase();
-      if (!valid.includes(ext)) {
-        alert('Unsupported format. Use: MP3, WAV, FLAC, AIFF, OGG, or M4A');
+  // ---- FILE UPLOAD (main) ----
+  const uploadZone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFileSelect(fileInput.files[0]);
+  });
+
+  function handleFileSelect(file) {
+    const valid = ['.mp3','.wav','.flac','.aiff','.aif','.ogg','.m4a'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (!valid.includes(ext)) {
+      alert('Unsupported format. Use: MP3, WAV, FLAC, AIFF, OGG, or M4A');
+      return;
+    }
+    uploadedFile = file;
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = formatSize(file.size);
+    document.getElementById('file-info').classList.remove('hidden');
+    uploadZone.classList.add('hidden');
+    document.getElementById('btn-process').disabled = false;
+    resetResults();
+  }
+
+  function clearFile() {
+    uploadedFile = null;
+    currentJobId = null;
+    fileInput.value = '';
+    document.getElementById('file-info').classList.add('hidden');
+    uploadZone.classList.remove('hidden');
+    document.getElementById('btn-process').disabled = true;
+    resetResults();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  // ---- REFERENCE FILE ----
+  const refZone = document.getElementById('ref-upload-zone');
+  const refInput = document.getElementById('ref-file-input');
+
+  refZone.addEventListener('click', () => refInput.click());
+  refZone.addEventListener('dragover', (e) => { e.preventDefault(); refZone.classList.add('drag-over'); });
+  refZone.addEventListener('dragleave', () => refZone.classList.remove('drag-over'));
+  refZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    refZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleRefSelect(e.dataTransfer.files[0]);
+  });
+  refInput.addEventListener('change', () => {
+    if (refInput.files.length) handleRefSelect(refInput.files[0]);
+  });
+
+  function handleRefSelect(file) {
+    refFile = file;
+    document.getElementById('ref-file-name').textContent = file.name;
+    document.getElementById('ref-file-info').classList.remove('hidden');
+    refZone.classList.add('hidden');
+  }
+
+  function clearRef() {
+    refFile = null;
+    refInput.value = '';
+    document.getElementById('ref-file-info').classList.add('hidden');
+    refZone.classList.remove('hidden');
+  }
+
+  // ---- RESET RESULTS ----
+  function resetResults() {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    document.getElementById('status-section').classList.add('hidden');
+    document.getElementById('error-display').classList.add('hidden');
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('empty-state').classList.remove('hidden');
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('steps-list').innerHTML = '';
+    document.getElementById('done-banner').classList.add('hidden');
+  }
+
+  // ---- PROCESS ----
+  async function startProcess() {
+    if (!uploadedFile) return;
+
+    // Disable button, show status
+    const btn = document.getElementById('btn-process');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined text-lg mr-1 align-middle animate-spin">progress_activity</span> PROCESSING...';
+
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('error-display').classList.add('hidden');
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('status-section').classList.remove('hidden');
+    document.getElementById('status-text').textContent = 'Uploading...';
+    document.getElementById('status-text').style.color = '#ff5638';
+    document.getElementById('status-dot').style.background = '#ff5638';
+    document.getElementById('status-bar').style.borderColor = '#ff5638';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('steps-list').innerHTML = '';
+
+    try {
+      // Upload
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+      const uploadData = await uploadRes.json();
+
+      if (uploadData.error) throw new Error(uploadData.error);
+
+      currentJobId = uploadData.job_id;
+      document.getElementById('status-filename').textContent = uploadData.filename;
+
+      // Build process config
+      const config = {
+        job_id: currentJobId,
+        stems: document.querySelector('input[name="stems"]:checked').value,
+        quality: document.querySelector('input[name="quality"]:checked').value,
+        midi: document.getElementById('opt-midi').checked,
+        chords: document.getElementById('opt-chords').checked,
+        speed: parseFloat(document.getElementById('opt-speed').value) || null,
+        pitch: parseInt(document.getElementById('opt-pitch').value) || null,
+        format: document.querySelector('input[name="format"]:checked').value,
+        bpm_filename: document.getElementById('opt-bpm-filename').checked,
+      };
+
+      // Normalize speed: only send if not 1.0
+      if (config.speed === 1.0) config.speed = null;
+      // Normalize pitch: only send if not 0
+      if (config.pitch === 0) config.pitch = null;
+
+      // Start processing
+      const processRes = await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      const processData = await processRes.json();
+      if (processData.error) throw new Error(processData.error);
+
+      // Start polling
+      document.getElementById('status-text').textContent = 'Processing';
+      pollInterval = setInterval(() => pollStatus(currentJobId), 2000);
+
+    } catch (err) {
+      showError(err.message);
+      resetButton();
+    }
+  }
+
+  // ---- POLL STATUS ----
+  async function pollStatus(jobId) {
+    try {
+      const res = await fetch(`/api/status/${jobId}`);
+      const data = await res.json();
+
+      if (data.error && !data.status) {
+        showError(data.error);
+        clearInterval(pollInterval);
+        pollInterval = null;
+        resetButton();
         return;
       }
-      uploadedFile = file;
-      document.getElementById('file-name').textContent = file.name;
-      document.getElementById('file-size').textContent = formatSize(file.size);
-      document.getElementById('file-info').classList.remove('hidden');
-      uploadZone.classList.add('hidden');
-      document.getElementById('btn-process').disabled = false;
 
-      // Reset previous results
-      resetResults();
-    }
+      // Update progress
+      document.getElementById('progress-bar').style.width = (data.progress || 0) + '%';
 
-    function clearFile() {
-      uploadedFile = null;
-      currentJobId = null;
-      fileInput.value = '';
-      document.getElementById('file-info').classList.add('hidden');
-      uploadZone.classList.remove('hidden');
-      document.getElementById('btn-process').disabled = true;
-      resetResults();
-    }
+      // Update status text
+      const statusMap = {
+        uploaded: 'Queued',
+        detecting: 'Detecting BPM & Key',
+        mastering: 'Mastering Audio',
+        separating: 'Separating Stems',
+        done: 'Complete',
+        error: 'Failed',
+      };
+      document.getElementById('status-text').textContent = statusMap[data.status] || data.status;
 
-    function formatSize(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / 1048576).toFixed(1) + ' MB';
-    }
+      // Update steps
+      renderSteps(data.steps || []);
 
-    // ---- REFERENCE FILE ----
-    const refZone = document.getElementById('ref-upload-zone');
-    const refInput = document.getElementById('ref-file-input');
-
-    refZone.addEventListener('click', () => refInput.click());
-    refZone.addEventListener('dragover', (e) => { e.preventDefault(); refZone.classList.add('drag-over'); });
-    refZone.addEventListener('dragleave', () => refZone.classList.remove('drag-over'));
-    refZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      refZone.classList.remove('drag-over');
-      if (e.dataTransfer.files.length) handleRefSelect(e.dataTransfer.files[0]);
-    });
-    refInput.addEventListener('change', () => {
-      if (refInput.files.length) handleRefSelect(refInput.files[0]);
-    });
-
-    function handleRefSelect(file) {
-      refFile = file;
-      document.getElementById('ref-file-name').textContent = file.name;
-      document.getElementById('ref-file-info').classList.remove('hidden');
-      refZone.classList.add('hidden');
-    }
-
-    function clearRef() {
-      refFile = null;
-      refInput.value = '';
-      document.getElementById('ref-file-info').classList.add('hidden');
-      refZone.classList.remove('hidden');
-    }
-
-    // ---- RESET RESULTS ----
-    function resetResults() {
-      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-      document.getElementById('status-section').classList.add('hidden');
-      document.getElementById('error-display').classList.add('hidden');
-      document.getElementById('results-section').classList.add('hidden');
-      document.getElementById('empty-state').classList.remove('hidden');
-      document.getElementById('progress-bar').style.width = '0%';
-      document.getElementById('steps-list').innerHTML = '';
-    }
-
-    // ---- PROCESS ----
-    async function startProcess() {
-      if (!uploadedFile) return;
-
-      // Disable button, show status
-      const btn = document.getElementById('btn-process');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="material-symbols-outlined text-xl mr-2 align-middle animate-spin">progress_activity</span> PROCESSING...';
-
-      document.getElementById('empty-state').classList.add('hidden');
-      document.getElementById('error-display').classList.add('hidden');
-      document.getElementById('results-section').classList.add('hidden');
-      document.getElementById('status-section').classList.remove('hidden');
-      document.getElementById('status-text').textContent = 'Uploading...';
-      document.getElementById('progress-bar').style.width = '0%';
-      document.getElementById('steps-list').innerHTML = '';
-
-      try {
-        // Upload
-        const formData = new FormData();
-        formData.append('file', uploadedFile);
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-        const uploadData = await uploadRes.json();
-
-        if (uploadData.error) throw new Error(uploadData.error);
-
-        currentJobId = uploadData.job_id;
-        document.getElementById('status-filename').textContent = uploadData.filename;
-
-        // Build process config
-        const config = {
-          job_id: currentJobId,
-          stems: document.querySelector('input[name="stems"]:checked').value,
-          quality: document.querySelector('input[name="quality"]:checked').value,
-          midi: document.getElementById('opt-midi').checked,
-          chords: document.getElementById('opt-chords').checked,
-          speed: parseFloat(document.getElementById('opt-speed').value) || null,
-          pitch: parseInt(document.getElementById('opt-pitch').value) || null,
-          format: document.querySelector('input[name="format"]:checked').value,
-          bpm_filename: document.getElementById('opt-bpm-filename').checked,
-        };
-
-        // Normalize speed: only send if not 1.0
-        if (config.speed === 1.0) config.speed = null;
-        // Normalize pitch: only send if not 0
-        if (config.pitch === 0) config.pitch = null;
-
-        // Start processing
-        const processRes = await fetch('/api/process', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config),
-        });
-        const processData = await processRes.json();
-        if (processData.error) throw new Error(processData.error);
-
-        // Start polling
-        document.getElementById('status-text').textContent = 'Processing';
-        pollInterval = setInterval(() => pollStatus(currentJobId), 2000);
-
-      } catch (err) {
-        showError(err.message);
+      // Handle completion
+      if (data.status === 'done') {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        // Update status bar to green
+        document.getElementById('status-bar').style.borderColor = '#4ade80';
+        document.getElementById('status-dot').style.background = '#4ade80';
+        document.getElementById('status-text').style.color = '#4ade80';
+        document.getElementById('status-text').textContent = 'DONE: MASTERING_PROTOCOL_COMPLETE';
+        document.getElementById('status-ping').classList.remove('animate-ping');
+        showResults(data.results, jobId);
         resetButton();
       }
-    }
 
-    // ---- POLL STATUS ----
-    async function pollStatus(jobId) {
-      try {
-        const res = await fetch(`/api/status/${jobId}`);
-        const data = await res.json();
-
-        if (data.error && !data.status) {
-          showError(data.error);
-          clearInterval(pollInterval);
-          pollInterval = null;
-          resetButton();
-          return;
-        }
-
-        // Update progress
-        document.getElementById('progress-bar').style.width = (data.progress || 0) + '%';
-
-        // Update status text
-        const statusMap = {
-          uploaded: 'Queued',
-          detecting: 'Detecting BPM & Key',
-          mastering: 'Mastering Audio',
-          separating: 'Separating Stems',
-          done: 'Complete',
-          error: 'Failed',
-        };
-        document.getElementById('status-text').textContent = statusMap[data.status] || data.status;
-
-        // Update steps
-        renderSteps(data.steps || []);
-
-        // Handle completion
-        if (data.status === 'done') {
-          clearInterval(pollInterval);
-          pollInterval = null;
-          document.getElementById('status-dot').classList.remove('pulse-dot');
-          document.getElementById('status-dot').style.background = '#4ade80';
-          document.getElementById('status-text').style.color = '#4ade80';
-          showResults(data.results, jobId);
-          resetButton();
-        }
-
-        // Handle error
-        if (data.status === 'error') {
-          clearInterval(pollInterval);
-          pollInterval = null;
-          document.getElementById('status-dot').style.background = '#ef4444';
-          document.getElementById('status-text').style.color = '#ef4444';
-          showError(data.error || 'Unknown processing error');
-          resetButton();
-        }
-
-      } catch (err) {
-        // Network error, keep polling
-        console.warn('Poll error:', err);
+      // Handle error
+      if (data.status === 'error') {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        document.getElementById('status-dot').style.background = '#ef4444';
+        document.getElementById('status-text').style.color = '#ef4444';
+        showError(data.error || 'Unknown processing error');
+        resetButton();
       }
+
+    } catch (err) {
+      console.warn('Poll error:', err);
+    }
+  }
+
+  // ---- RENDER STEPS ----
+  function renderSteps(steps) {
+    const container = document.getElementById('steps-list');
+    container.innerHTML = steps.map(s => {
+      let icon, color;
+      if (s.status === 'done') { icon = 'check_circle'; color = '#4ade80'; }
+      else if (s.status === 'running') { icon = 'pending'; color = '#ff5638'; }
+      else { icon = 'radio_button_unchecked'; color = 'rgba(230,189,181,0.3)'; }
+      return `<div class="flex items-center gap-2 px-3 py-1">
+        <span class="material-symbols-outlined text-sm" style="color:${color};font-variation-settings:'FILL' ${s.status === 'done' ? 1 : 0}">${icon}</span>
+        <span class="font-mono text-[10px] uppercase tracking-wider" style="color:${s.status === 'running' ? '#ffb4a5' : s.status === 'done' ? '#4ade80' : '#e6bdb5'}">${s.name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ---- SHOW RESULTS ----
+  function showResults(results, jobId) {
+    const section = document.getElementById('results-section');
+    section.classList.remove('hidden');
+
+    // Fill config log
+    const fname = uploadedFile ? uploadedFile.name : '';
+    document.getElementById('config-filename').textContent = fname;
+    document.getElementById('cfg-stems').textContent = (document.querySelector('input[name="stems"]:checked').value || '4').toUpperCase() + '-STEMS';
+    document.getElementById('cfg-quality').textContent = (document.querySelector('input[name="quality"]:checked').value || 'best');
+    document.getElementById('cfg-midi').textContent = document.getElementById('opt-midi').checked ? 'Enabled' : 'Disabled';
+    document.getElementById('cfg-format').textContent = (document.querySelector('input[name="format"]:checked').value || 'wav24').toUpperCase();
+
+    // Show done banner with timestamp
+    const doneBanner = document.getElementById('done-banner');
+    doneBanner.classList.remove('hidden');
+    const now = new Date();
+    document.getElementById('done-timestamp').textContent = `TS: ${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+    // Info row
+    if (results.info) {
+      const infoRow = document.getElementById('info-row');
+      infoRow.classList.remove('hidden');
+      document.getElementById('info-bpm').textContent = results.info.bpm ? Math.round(results.info.bpm) : '--';
+      document.getElementById('info-key').textContent = results.info.key || '--';
+      document.getElementById('info-confidence').textContent = results.info.confidence ? (results.info.confidence * 100).toFixed(1) + '%' : '--';
     }
 
-    // ---- RENDER STEPS ----
-    function renderSteps(steps) {
-      const container = document.getElementById('steps-list');
-      container.innerHTML = steps.map(s => {
-        let icon, color;
-        if (s.status === 'done') { icon = 'check_circle'; color = '#4ade80'; }
-        else if (s.status === 'running') { icon = 'pending'; color = '#ff5638'; }
-        else { icon = 'radio_button_unchecked'; color = 'rgba(230,189,181,0.3)'; }
-        return `<div class="flex items-center gap-2 px-3 py-1">
-          <span class="material-symbols-outlined text-sm" style="color:${color}">${icon}</span>
-          <span class="font-mono text-xs uppercase tracking-wider" style="color:${s.status === 'running' ? '#ffb4a5' : '#e6bdb5'}">${s.name}</span>
-        </div>`;
+    // Chords
+    if (results.chords && results.chords.length > 0) {
+      const chordStr = results.chords.slice(0, 8).map(c => c[1]).join(' \u2192 ');
+      document.getElementById('info-chords').textContent = chordStr;
+    }
+
+    // Audio player
+    if (results.remaster) {
+      const playerSection = document.getElementById('player-section');
+      playerSection.classList.remove('hidden');
+      const audio = document.getElementById('audio-player');
+      audio.src = `/api/download/${jobId}/remaster`;
+      document.getElementById('player-title').textContent = 'REM_' + fname.replace(/\.[^/.]+$/, '') + '_FINAL';
+    }
+
+    // Downloads
+    const dlSection = document.getElementById('download-section');
+    dlSection.classList.remove('hidden');
+
+    if (results.remaster) {
+      const dlRemaster = document.getElementById('dl-remaster');
+      dlRemaster.href = `/api/download/${jobId}/remaster`;
+      dlRemaster.classList.remove('hidden');
+    }
+    if (results.stems) {
+      const dlStems = document.getElementById('dl-stems');
+      dlStems.href = `/api/download/${jobId}/stems`;
+      dlStems.classList.remove('hidden');
+    }
+    if (results.midi && results.midi.length > 0) {
+      const dlMidi = document.getElementById('dl-midi');
+      dlMidi.href = `/api/download/${jobId}/midi`;
+      dlMidi.classList.remove('hidden');
+    }
+
+    // Animate peak meters randomly
+    animatePeaks();
+  }
+
+  // ---- ANIMATE PEAK METERS ----
+  function animatePeaks() {
+    const lPeak = -(Math.random() * 4 + 1).toFixed(1);
+    const rPeak = -(Math.random() * 4 + 1).toFixed(1);
+    document.getElementById('peak-l').textContent = lPeak + ' dB';
+    document.getElementById('peak-r').textContent = rPeak + ' dB';
+    document.getElementById('peak-l-bar').style.width = Math.min(100, 100 + lPeak * 5) + '%';
+    document.getElementById('peak-r-bar').style.width = Math.min(100, 100 + rPeak * 5) + '%';
+  }
+
+  // ---- SHOW ERROR ----
+  function showError(msg) {
+    const el = document.getElementById('error-display');
+    el.classList.remove('hidden');
+    document.getElementById('error-text').textContent = msg;
+  }
+
+  // ---- RESET BUTTON ----
+  function resetButton() {
+    const btn = document.getElementById('btn-process');
+    btn.innerHTML = '<span class="material-symbols-outlined text-lg mr-1 align-middle">bolt</span> RAWMASTER_IT';
+    btn.disabled = !uploadedFile;
+  }
+
+  // ---- LIBRARY ----
+  async function loadLibrary() {
+    const body = document.getElementById('library-body');
+    const empty = document.getElementById('library-empty');
+    body.innerHTML = '<tr><td colspan="7" class="text-center py-12 opacity-40"><span class="font-mono text-xs uppercase tracking-widest text-on-surface-variant/50">Loading...</span></td></tr>';
+    empty.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/library');
+      const data = await res.json();
+
+      if (!data.tracks || data.tracks.length === 0) {
+        body.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      body.innerHTML = data.tracks.map(t => {
+        const check = '<span class="material-symbols-outlined text-sm text-success" style="font-variation-settings:\'FILL\' 1">check_circle</span>';
+        const dash = '<span class="text-on-surface-variant/30">&mdash;</span>';
+        return `<tr class="border-b border-outline-variant/10 hover:bg-surface-container transition-colors cursor-default">
+          <td class="px-4 py-3 font-mono text-[11px] text-terminal-text truncate max-w-[300px]" title="${escHtml(t.path)}">${escHtml(t.name)}</td>
+          <td class="px-4 py-3 text-center font-mono text-xs text-primary">${t.bpm || dash}</td>
+          <td class="px-4 py-3 text-center font-mono text-xs text-signal-red">${t.key || dash}</td>
+          <td class="px-4 py-3 text-center">${t.has_stems ? check : dash}</td>
+          <td class="px-4 py-3 text-center">${t.has_midi ? check : dash}</td>
+          <td class="px-4 py-3 text-center">${t.has_chords ? check : dash}</td>
+          <td class="px-4 py-3 text-center">${t.has_remaster ? check : dash}</td>
+        </tr>`;
       }).join('');
+
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400 font-mono text-xs">Error loading library: ${escHtml(err.message)}</td></tr>`;
     }
+  }
 
-    // ---- SHOW RESULTS ----
-    function showResults(results, jobId) {
-      const section = document.getElementById('results-section');
-      section.classList.remove('hidden');
+  function escHtml(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
 
-      // Info row
-      if (results.info) {
-        const infoRow = document.getElementById('info-row');
-        infoRow.classList.remove('hidden');
-        document.getElementById('info-bpm').textContent = results.info.bpm ? Math.round(results.info.bpm) : '--';
-        document.getElementById('info-key').textContent = results.info.key || '--';
-      }
-
-      // Chords
-      if (results.chords && results.chords.length > 0) {
-        const chordStr = results.chords.slice(0, 6).map(c => c[1]).join('  ');
-        document.getElementById('info-chords').textContent = chordStr;
-      }
-
-      // Audio player
-      if (results.remaster) {
-        const playerSection = document.getElementById('player-section');
-        playerSection.classList.remove('hidden');
-        const audio = document.getElementById('audio-player');
-        audio.src = `/api/download/${jobId}/remaster`;
-      }
-
-      // Downloads
-      const dlSection = document.getElementById('download-section');
-      dlSection.classList.remove('hidden');
-
-      if (results.remaster) {
-        const dlRemaster = document.getElementById('dl-remaster');
-        dlRemaster.href = `/api/download/${jobId}/remaster`;
-        dlRemaster.classList.remove('hidden');
-      }
-      if (results.stems) {
-        const dlStems = document.getElementById('dl-stems');
-        dlStems.href = `/api/download/${jobId}/stems`;
-        dlStems.classList.remove('hidden');
-      }
-      if (results.midi && results.midi.length > 0) {
-        const dlMidi = document.getElementById('dl-midi');
-        dlMidi.href = `/api/download/${jobId}/midi`;
-        dlMidi.classList.remove('hidden');
-      }
+  // ---- KEYBOARD SHORTCUT ----
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!document.getElementById('btn-process').disabled) startProcess();
     }
-
-    // ---- SHOW ERROR ----
-    function showError(msg) {
-      const el = document.getElementById('error-display');
-      el.classList.remove('hidden');
-      document.getElementById('error-text').textContent = msg;
-    }
-
-    // ---- RESET BUTTON ----
-    function resetButton() {
-      const btn = document.getElementById('btn-process');
-      btn.innerHTML = '<span class="material-symbols-outlined text-xl mr-2 align-middle">bolt</span> RAWMASTER_IT';
-      btn.disabled = !uploadedFile;
-    }
-
-    // ---- LIBRARY ----
-    async function loadLibrary() {
-      const body = document.getElementById('library-body');
-      const empty = document.getElementById('library-empty');
-      body.innerHTML = '<tr><td colspan="7" class="text-center py-12 opacity-40"><span class="font-mono text-xs uppercase tracking-widest text-txt-sec">Loading...</span></td></tr>';
-      empty.classList.add('hidden');
-
-      try {
-        const res = await fetch('/api/library');
-        const data = await res.json();
-
-        if (!data.tracks || data.tracks.length === 0) {
-          body.innerHTML = '';
-          empty.classList.remove('hidden');
-          return;
-        }
-
-        body.innerHTML = data.tracks.map(t => {
-          const check = '<span class="material-symbols-outlined text-sm text-success">check</span>';
-          const dash = '<span class="text-txt-sec opacity-30">&mdash;</span>';
-          return `<tr class="border-b border-border hover:bg-surface transition-colors cursor-default">
-            <td class="px-4 py-3 font-mono text-xs text-txt truncate max-w-[300px]" title="${escHtml(t.path)}">${escHtml(t.name)}</td>
-            <td class="px-4 py-3 text-center font-mono text-xs text-accent">${t.bpm || dash}</td>
-            <td class="px-4 py-3 text-center font-mono text-xs text-accent-text">${t.key || dash}</td>
-            <td class="px-4 py-3 text-center">${t.has_stems ? check : dash}</td>
-            <td class="px-4 py-3 text-center">${t.has_midi ? check : dash}</td>
-            <td class="px-4 py-3 text-center">${t.has_chords ? check : dash}</td>
-            <td class="px-4 py-3 text-center">${t.has_remaster ? check : dash}</td>
-          </tr>`;
-        }).join('');
-
-      } catch (err) {
-        body.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400 font-mono text-xs">Error loading library: ${escHtml(err.message)}</td></tr>`;
-      }
-    }
-
-    function escHtml(str) {
-      if (!str) return '';
-      const d = document.createElement('div');
-      d.textContent = str;
-      return d.innerHTML;
-    }
-
-    // ---- KEYBOARD SHORTCUT ----
-    document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (!document.getElementById('btn-process').disabled) startProcess();
-      }
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
