@@ -34,6 +34,13 @@ BANNER = r"""
 
 SUPPORTED_FORMATS = {".mp3", ".wav", ".flac", ".aiff", ".aif", ".ogg", ".m4a"}
 
+# Stem separation quality presets: (shifts, overlap)
+QUALITY_PRESETS = {
+    "fast":  (2,  0.25),   # ~5 min per track — rough separation
+    "good":  (5,  0.50),   # ~15 min — much cleaner, recommended
+    "best":  (10, 0.75),   # ~30 min — studio quality, maximum clarity
+}
+
 GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
 
 
@@ -200,21 +207,26 @@ def remaster_with_reference(audio_path: Path, reference_path: Path, output_dir: 
 #  STEP 2 — STEM SEPARATION
 # ─────────────────────────────────────────────
 
-def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False) -> dict:
+def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False, quality: str = "good") -> dict:
     if not audio_path.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
-    print("  🥁 Separating stems (htdemucs_ft)…")
-    warn_if_first_run()
+
+    shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["good"])
+    # Allow env var override for testing
+    shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
 
     model = "htdemucs_6s" if six_stem else "htdemucs_ft"
+    print(f"  🥁 Separating stems ({model}, quality={quality}, shifts={shifts})…")
+    warn_if_first_run()
+
     stems_out = output_dir / "stems"
     stems_out.mkdir(parents=True, exist_ok=True)
 
     cmd = [
         sys.executable, "-m", "demucs",
         "-n", model,
-        "--shifts", os.environ.get("RAWMASTER_TEST_SHIFTS", "2"),
-        "--overlap", "0.25",
+        "--shifts", str(shifts),
+        "--overlap", str(overlap),
         "--float32",
         "--clip-mode", "rescale",
         "-o", str(output_dir / "_demucs_tmp"),
@@ -323,6 +335,7 @@ def process_file(
     do_info: bool = False,
     six_stem: bool = False,
     reference_path: Path = None,
+    quality: str = "good",
 ):
     if not audio_path.exists():
         print(f"  ❌ File not found: {audio_path}")
@@ -354,7 +367,7 @@ def process_file(
 
     stem_paths = {}
     if do_stems or do_midi or do_midi_all:
-        stem_paths = separate_stems(audio_path, output_root, six_stem=six_stem)
+        stem_paths = separate_stems(audio_path, output_root, six_stem=six_stem, quality=quality)
 
     if do_midi or do_midi_all:
         extract_midi(stem_paths, output_root, midi_all=do_midi_all)
@@ -385,6 +398,8 @@ def main():
     parser.add_argument("--ref", "--reference", dest="reference",
                         metavar="FILE",
                         help="Reference track for mastering (match EQ + loudness + dynamics)")
+    parser.add_argument("--quality", choices=["fast", "good", "best"], default="best",
+                        help="Stem separation quality: fast (~5min), good (~15min), best (~30min, default)")
     parser.add_argument("--version", action="version", version=f"RAWMASTER {__version__}")
 
     args = parser.parse_args()
@@ -406,6 +421,7 @@ def main():
     if reference_path and not reference_path.exists():
         print(f"  ❌ Reference file not found: {reference_path}")
         sys.exit(1)
+    quality = args.quality
 
     # Batch mode (folder)
     if input_path.is_dir():
@@ -418,9 +434,9 @@ def main():
             sys.exit(1)
         print(f"  📂 Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
         for f in audio_files:
-            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path)
+            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality)
     else:
-        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path)
+        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality)
 
 
 if __name__ == "__main__":

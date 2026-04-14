@@ -14,7 +14,7 @@ from pathlib import Path
 import gradio as gr
 
 # Import pipeline functions from rawmaster.py (same dir)
-from rawmaster import detect_info, remaster, remaster_with_reference, separate_stems, extract_midi, SUPPORTED_FORMATS
+from rawmaster import detect_info, remaster, remaster_with_reference, separate_stems, extract_midi, SUPPORTED_FORMATS, QUALITY_PRESETS
 
 # ── Status rendering ───────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ def _yld(status, progress=None, stem_list=None, remaster=None, stems_zip=None, m
     )
 
 
-def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
+def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do_midi, midi_all):
     if audio_input is None:
         yield _yld(["Drop a track above and click RAWMASTER IT."])
         return
@@ -187,11 +187,14 @@ def process(audio_input, reference_input, do_stems, n_stems, do_midi, midi_all):
             import sys as _sys
             import os as _os
             model = "htdemucs_6s" if six_stem else "htdemucs_ft"
+            q = quality_setting if quality_setting in ("fast", "good", "best") else "best"
+            shifts, overlap = QUALITY_PRESETS[q]
+            shifts = int(_os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
             demucs_cmd = [
                 _sys.executable, "-m", "demucs",
                 "-n", model,
-                "--shifts", _os.environ.get("RAWMASTER_TEST_SHIFTS", "2"),
-                "--overlap", "0.25",
+                "--shifts", str(shifts),
+                "--overlap", str(overlap),
                 "--float32",
                 "--clip-mode", "rescale",
                 "-o", str(stems_dir / "_demucs_tmp"),
@@ -329,6 +332,13 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
                 visible=True,
                 info="4 = vocals/drums/bass/other  |  6 = adds guitar + piano",
             )
+            quality = gr.Radio(
+                ["fast", "good", "best"],
+                label="Stem quality",
+                value="best",
+                visible=True,
+                info="fast ~5min | good ~15min | best ~30min (recommended)",
+            )
             do_midi = gr.Checkbox(
                 label="Extract MIDI (bass stem)",
                 value=True,
@@ -360,9 +370,9 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
             )
 
     do_stems.change(
-        fn=lambda v: [gr.update(visible=v), gr.update(visible=v)],
+        fn=lambda v: [gr.update(visible=v), gr.update(visible=v), gr.update(visible=v)],
         inputs=do_stems,
-        outputs=[n_stems, do_midi],
+        outputs=[n_stems, quality, do_midi],
     )
     do_midi.change(
         fn=lambda v: gr.update(visible=v),
@@ -372,7 +382,7 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
 
     run_btn.click(
         fn=process,
-        inputs=[audio_input, reference_input, do_stems, n_stems, do_midi, midi_all],
+        inputs=[audio_input, reference_input, do_stems, n_stems, quality, do_midi, midi_all],
         outputs=[status_box, remaster_audio, remaster_dl, stems_dl, midi_dl, info_box],
     )
 
