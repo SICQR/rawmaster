@@ -332,11 +332,21 @@ Users process many tracks over time. They need to find, replay, and re-download 
 - Filter by: has stems, has MIDI, has chords, key (for DJ use — find all tracks in Am)
 - Search by filename
 
+**Import tracks:**
+- Drag-and-drop files or folders into the library to import
+- "Import folder" button to scan a music folder (recursively finds all audio files)
+- Imports from DJ software: Rekordbox XML, Serato crates, iTunes/Music.app library
+- Each imported track shows as "unprocessed" until user runs it through RAWMASTER
+- Bulk select + "Process all" for batch operations
+- Import from cloud: paste a Suno/Udio URL to download and add to library
+
 **How it works technically:**
 - Scan the `rawmaster_output/` directory (or a user-configured output directory)
 - Each subdirectory = one processed track
 - Read `info.txt` for BPM/key, `chords.txt` for chord data
 - Check for existence of `stems/`, `midi/` to show tags
+- Imported but unprocessed tracks stored in a `rawmaster_library/` directory
+- Lightweight JSON index file for fast browsing (rebuilt from filesystem on startup)
 - No database needed — filesystem is the source of truth
 
 **Quick play:**
