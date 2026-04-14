@@ -37,7 +37,7 @@ jobs = {}
 
 @app.route("/")
 def index():
-    return render_template("desktop_app_results.html")
+    return render_template("app.html")
 
 
 @app.route("/library")
