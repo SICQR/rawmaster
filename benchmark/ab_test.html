@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAWMASTER — A/B Blind Listening Test</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a; color: #f0ece4;
+    font-family: 'Space Mono', 'Courier New', monospace;
+    padding: 40px 24px; max-width: 800px; margin: 0 auto;
+  }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 40px; }
+  .test-card {
+    background: #111; border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 24px; margin-bottom: 24px;
+  }
+  .test-card h3 { font-size: 14px; color: #e63012; margin-bottom: 16px; letter-spacing: 0.1em; }
+  .stem-label { font-size: 12px; color: #888; margin-bottom: 8px; letter-spacing: 0.08em; }
+  .players { display: flex; gap: 16px; margin-bottom: 16px; }
+  .player-col { flex: 1; }
+  .player-col label {
+    display: block; font-size: 16px; font-weight: 700;
+    margin-bottom: 8px; text-align: center;
+    padding: 8px; border: 1px solid #2a2a2a; border-radius: 4px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .player-col label:hover { border-color: #555; }
+  audio { width: 100%; }
+  .vote-row { display: flex; gap: 16px; margin-top: 12px; }
+  .vote-btn {
+    flex: 1; padding: 12px; border: 2px solid #2a2a2a; border-radius: 6px;
+    background: transparent; color: #f0ece4; font-family: inherit;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .vote-btn:hover { border-color: #e63012; }
+  .vote-btn.selected { border-color: #e63012; background: rgba(230,48,18,0.15); }
+  .vote-btn.tie { border-color: #888; }
+  .vote-btn.tie.selected { border-color: #C8962C; background: rgba(200,150,44,0.15); }
+  .results-box {
+    background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 24px; margin-top: 40px;
+  }
+  .results-box h2 { font-size: 16px; margin-bottom: 16px; }
+  .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+  .result-row:last-child { border-bottom: none; }
+  .score { color: #e63012; font-weight: 700; }
+  .instructions {
+    background: #161616; border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 20px; margin-bottom: 32px; font-size: 13px; color: #888; line-height: 1.7;
+  }
+  .instructions strong { color: #f0ece4; }
+  .drop-zone {
+    border: 2px dashed #2a2a2a; border-radius: 8px; padding: 40px;
+    text-align: center; color: #555; margin-bottom: 32px; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .drop-zone:hover { border-color: #e63012; }
+  .drop-zone.active { border-color: #e63012; background: rgba(230,48,18,0.05); }
+  button#export-btn {
+    display: block; width: 100%; padding: 14px; margin-top: 16px;
+    background: #e63012; color: #fff; border: none; border-radius: 6px;
+    font-family: inherit; font-size: 14px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.05em;
+  }
+  button#export-btn:hover { background: #ff3d1a; }
+</style>
+</head>
+<body>
+
+<h1>RAWMASTER — A/B Blind Listening Test</h1>
+<p class="sub">Compare stem separation quality. Which sounds better — A or B? You won't know which is which until you export.</p>
+
+<div class="instructions">
+  <strong>How to use:</strong><br>
+  1. Drop two folders of stems below (e.g., "demucs_only" and "rawmaster_full")<br>
+  2. For each stem, listen to A and B (randomly assigned)<br>
+  3. Vote which sounds better — or "Tie" if you can't tell<br>
+  4. Export results to see which pipeline won
+</div>
+
+<div class="drop-zone" id="dropzone">
+  <p>Drop two folders of stems here</p>
+  <p style="font-size:11px;margin-top:8px">Or click to select files from both folders</p>
+  <input type="file" id="file-input" multiple webkitdirectory style="display:none">
+</div>
+
+<div id="tests-container"></div>
+
+<div class="results-box" id="results-box" style="display:none">
+  <h2>RESULTS</h2>
+  <div id="results-content"></div>
+  <button id="export-btn" onclick="exportResults()">Export Results as JSON</button>
+</div>
+
+<script>
+const votes = {};
+let assignments = {}; // {stem: {a: 'folder1', b: 'folder2'}} — randomized
+let folder1Files = {};
+let folder2Files = {};
+let folder1Name = '';
+let folder2Name = '';
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+
+dropzone.onclick = () => fileInput.click();
+dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('active'); };
+dropzone.ondragleave = () => dropzone.classList.remove('active');
+dropzone.ondrop = (e) => { e.preventDefault(); dropzone.classList.remove('active'); handleFiles(e.dataTransfer.files); };
+fileInput.onchange = (e) => handleFiles(e.target.files);
+
+function handleFiles(fileList) {
+  const folders = {};
+  for (const file of fileList) {
+    const parts = file.webkitRelativePath?.split('/') || file.name.split('/');
+    const folder = parts.length > 1 ? parts[parts.length - 2] : 'unknown';
+    if (!folders[folder]) folders[folder] = {};
+    const stemName = file.name.replace('.wav', '').replace('.mp3', '').replace('.flac', '');
+    folders[folder][stemName] = file;
+  }
+
+  const folderNames = Object.keys(folders);
+  if (folderNames.length < 2) {
+    alert('Need stems from two different folders to compare. Got: ' + folderNames.join(', '));
+    return;
+  }
+
+  folder1Name = folderNames[0];
+  folder2Name = folderNames[1];
+  folder1Files = folders[folder1Name];
+  folder2Files = folders[folder2Name];
+
+  buildTests();
+}
+
+function buildTests() {
+  const container = document.getElementById('tests-container');
+  container.innerHTML = '';
+
+  // Find common stems
+  const stems = [...new Set([...Object.keys(folder1Files), ...Object.keys(folder2Files)])].sort();
+
+  for (const stem of stems) {
+    if (!folder1Files[stem] || !folder2Files[stem]) continue;
+
+    // Randomly assign A and B
+    const coinFlip = Math.random() > 0.5;
+    assignments[stem] = {
+      a: coinFlip ? folder1Name : folder2Name,
+      b: coinFlip ? folder2Name : folder1Name,
+      aFile: coinFlip ? folder1Files[stem] : folder2Files[stem],
+      bFile: coinFlip ? folder2Files[stem] : folder1Files[stem],
+    };
+
+    const card = document.createElement('div');
+    card.className = 'test-card';
+    card.innerHTML = `
+      <p class="stem-label">${stem.toUpperCase()}</p>
+      <div class="players">
+        <div class="player-col">
+          <label>A</label>
+          <audio controls src="${URL.createObjectURL(assignments[stem].aFile)}"></audio>
+        </div>
+        <div class="player-col">
+          <label>B</label>
+          <audio controls src="${URL.createObjectURL(assignments[stem].bFile)}"></audio>
+        </div>
+      </div>
+      <div class="vote-row">
+        <button class="vote-btn" onclick="vote('${stem}', 'a', this)">A is better</button>
+        <button class="vote-btn tie" onclick="vote('${stem}', 'tie', this)">Tie</button>
+        <button class="vote-btn" onclick="vote('${stem}', 'b', this)">B is better</button>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+
+  dropzone.style.display = 'none';
+  document.getElementById('results-box').style.display = 'block';
+  updateResults();
+}
+
+function vote(stem, choice, btn) {
+  // Clear previous selection
+  btn.parentElement.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  votes[stem] = choice;
+  updateResults();
+}
+
+function updateResults() {
+  const content = document.getElementById('results-content');
+  let html = '';
+  let f1Wins = 0, f2Wins = 0, ties = 0;
+
+  for (const [stem, choice] of Object.entries(votes)) {
+    const a = assignments[stem];
+    let winner;
+    if (choice === 'tie') { winner = 'Tie'; ties++; }
+    else if (choice === 'a') { winner = a.a; a.a === folder1Name ? f1Wins++ : f2Wins++; }
+    else { winner = a.b; a.b === folder1Name ? f1Wins++ : f2Wins++; }
+    html += `<div class="result-row"><span>${stem}</span><span class="score">${winner}</span></div>`;
+  }
+
+  html += `<div class="result-row" style="margin-top:12px;border-top:1px solid #333;padding-top:12px">
+    <span style="font-weight:700">SCORE</span>
+    <span><span class="score">${folder1Name}: ${f1Wins}</span> | <span class="score">${folder2Name}: ${f2Wins}</span> | Ties: ${ties}</span>
+  </div>`;
+
+  content.innerHTML = html;
+}
+
+function exportResults() {
+  const data = {
+    timestamp: new Date().toISOString(),
+    folder1: folder1Name,
+    folder2: folder2Name,
+    assignments: Object.fromEntries(
+      Object.entries(assignments).map(([stem, a]) => [stem, {a: a.a, b: a.b}])
+    ),
+    votes: votes,
+    summary: {
+      folder1_wins: Object.entries(votes).filter(([s, v]) =>
+        (v === 'a' && assignments[s].a === folder1Name) ||
+        (v === 'b' && assignments[s].b === folder1Name)
+      ).length,
+      folder2_wins: Object.entries(votes).filter(([s, v]) =>
+        (v === 'a' && assignments[s].a === folder2Name) ||
+        (v === 'b' && assignments[s].b === folder2Name)
+      ).length,
+      ties: Object.values(votes).filter(v => v === 'tie').length,
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ab_test_results_${Date.now()}.json`;
+  a.click();
+}
+</script>
+</body>
+</html>
