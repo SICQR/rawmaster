@@ -5,6 +5,7 @@ Smash Daddys Audio Tools | Strip it back. Own the stems.
 Run: python3 app.py  ->  http://localhost:7860
 """
 
+import os
 import re
 import tempfile
 import time
@@ -14,7 +15,11 @@ from pathlib import Path
 import gradio as gr
 
 # Import pipeline functions from rawmaster.py (same dir)
-from rawmaster import detect_info, remaster, remaster_with_reference, separate_stems, extract_midi, SUPPORTED_FORMATS, QUALITY_PRESETS
+from rawmaster import (
+    detect_info, remaster, remaster_with_reference, separate_stems, extract_midi,
+    post_process_stems, _run_demucs_model,
+    SUPPORTED_FORMATS, QUALITY_PRESETS, ENSEMBLE_MODELS,
+)
 
 # ── Status rendering ───────────────────────────────────────────────────────────
 
@@ -175,86 +180,143 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
         if six_stem:
             expected_stems += ["guitar", "piano"]
 
-        status.append(f"[{step}/{total_steps}] Separating stems ({n_stems}-stem)...")
+        q = quality_setting if quality_setting in ("fast", "good", "best") else "best"
+        use_ensemble = (q == "best" and not six_stem)
+        shifts, overlap = QUALITY_PRESETS[q]
+        shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
+
+        models_to_run = ENSEMBLE_MODELS if use_ensemble else [("htdemucs_6s" if six_stem else "htdemucs_ft", 1.0)]
+        mode_label = "ensemble" if use_ensemble else n_stems + "-stem"
+
+        status.append(f"[{step}/{total_steps}] Separating stems ({mode_label}, shifts={shifts})...")
         stem_status = [(s, False) for s in expected_stems]
         yield _yld(status, progress=0, stem_list=stem_status, remaster=remaster_path, info=info_str)
 
         try:
             stems_dir = tmp_dir / "stems_run"
             stems_dir.mkdir()
-
             import subprocess as sp
             import sys as _sys
-            import os as _os
-            model = "htdemucs_6s" if six_stem else "htdemucs_ft"
-            q = quality_setting if quality_setting in ("fast", "good", "best") else "best"
-            shifts, overlap = QUALITY_PRESETS[q]
-            shifts = int(_os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
-            demucs_cmd = [
-                _sys.executable, "-m", "demucs",
-                "-n", model,
-                "--shifts", str(shifts),
-                "--overlap", str(overlap),
-                "--float32",
-                "--clip-mode", "rescale",
-                "-o", str(stems_dir / "_demucs_tmp"),
-                str(audio_path),
-            ]
-
-            # Write stderr to temp file so we can read Demucs progress
-            stderr_path = tmp_dir / "demucs_stderr.txt"
-            stderr_file = open(stderr_path, "w")
-            proc = sp.Popen(demucs_cmd, stdout=sp.PIPE, stderr=stderr_file)
-
-            # Poll every 4 seconds — parse percentage from Demucs tqdm output
-            last_pct = 0
-            while proc.poll() is None:
-                time.sleep(4)
-                elapsed = _elapsed(t_step)
-
-                # Read stderr for tqdm progress (e.g. "45%|████")
-                try:
-                    stderr_file.flush()
-                    raw = open(stderr_path).read()
-                    pct_matches = re.findall(r'(\d+)%\|', raw)
-                    if pct_matches:
-                        last_pct = int(pct_matches[-1])
-                except Exception:
-                    pass
-
-                status[-1] = f"[{step}/{total_steps}] Separating stems ({n_stems}-stem) — {elapsed} elapsed"
-                yield _yld(status, progress=last_pct, stem_list=stem_status,
-                           remaster=remaster_path, info=info_str)
-
-            stderr_file.close()
-
-            if proc.returncode != 0:
-                raw = open(stderr_path).read()
-                raise RuntimeError(f"Demucs failed: {raw[:200]}")
-
-            # Move stems and show each one appearing
             import shutil
-            track_name = audio_path.stem
-            demucs_track_dir = stems_dir / "_demucs_tmp" / model / track_name
+
+            all_model_paths = []
+
+            # Run each model with progress heartbeat
+            for model_idx, (model_name, weight) in enumerate(models_to_run):
+                model_label = f"model {model_idx+1}/{len(models_to_run)} ({model_name})" if use_ensemble else model_name
+
+                stderr_path = tmp_dir / f"demucs_stderr_{model_idx}.txt"
+                stderr_file = open(stderr_path, "w")
+
+                demucs_cmd = [
+                    _sys.executable, "-m", "demucs",
+                    "-n", model_name,
+                    "--shifts", str(shifts),
+                    "--overlap", str(overlap),
+                    "--float32",
+                    "--clip-mode", "rescale",
+                    "-o", str(stems_dir / "_demucs_tmp"),
+                    str(audio_path),
+                ]
+                proc = sp.Popen(demucs_cmd, stdout=sp.PIPE, stderr=stderr_file)
+
+                last_pct = 0
+                while proc.poll() is None:
+                    time.sleep(4)
+                    elapsed = _elapsed(t_step)
+                    try:
+                        stderr_file.flush()
+                        raw = open(stderr_path).read()
+                        pct_matches = re.findall(r'(\d+)%\|', raw)
+                        if pct_matches:
+                            last_pct = int(pct_matches[-1])
+                    except Exception:
+                        pass
+
+                    # Scale progress: model 1 = 0-45%, model 2 = 45-90%, post = 90-100%
+                    if use_ensemble:
+                        base_pct = model_idx * 45
+                        scaled_pct = base_pct + int(last_pct * 0.45)
+                    else:
+                        scaled_pct = int(last_pct * 0.9)
+
+                    status[-1] = f"[{step}/{total_steps}] {model_label} — {elapsed} elapsed"
+                    yield _yld(status, progress=scaled_pct, stem_list=stem_status,
+                               remaster=remaster_path, info=info_str)
+
+                stderr_file.close()
+
+                if proc.returncode != 0:
+                    raw = open(stderr_path).read()
+                    raise RuntimeError(f"Demucs {model_name} failed: {raw[:200]}")
+
+                # Collect stem paths for this model
+                track_name = audio_path.stem
+                demucs_dir = stems_dir / "_demucs_tmp" / model_name / track_name
+                model_stems = {}
+                for sf_path in demucs_dir.glob("*.wav"):
+                    model_stems[sf_path.stem] = sf_path
+                all_model_paths.append((model_stems, weight))
+
+            # Blend or move stems
             stems_out = stems_dir / "stems"
             stems_out.mkdir(parents=True, exist_ok=True)
             stem_paths = {}
             found_stems = set()
-            for stem_file in sorted(demucs_track_dir.glob("*.wav")):
-                dest = stems_out / stem_file.name
-                shutil.move(str(stem_file), str(dest))
-                stem_paths[stem_file.stem] = dest
-                found_stems.add(stem_file.stem)
-                # Update stem checklist
-                stem_status = [(s, s in found_stems) for s in expected_stems]
-                status[-1] = f"[{step}/{total_steps}] Extracting stems..."
-                yield _yld(status, progress=100, stem_list=stem_status,
-                           remaster=remaster_path, info=info_str)
+
+            if use_ensemble and len(all_model_paths) > 1:
+                status[-1] = f"[{step}/{total_steps}] Blending {len(all_model_paths)} models..."
+                yield _yld(status, progress=90, stem_list=stem_status, remaster=remaster_path, info=info_str)
+
+                import soundfile as _sf
+                all_stem_names = set()
+                for paths, _ in all_model_paths:
+                    all_stem_names.update(paths.keys())
+
+                for stem_name in sorted(all_stem_names):
+                    blended = None
+                    total_w = 0.0
+                    file_sr = None
+                    for paths, w in all_model_paths:
+                        if stem_name not in paths:
+                            continue
+                        audio_data, file_sr = _sf.read(str(paths[stem_name]), dtype="float32")
+                        if blended is None:
+                            blended = audio_data * w
+                        else:
+                            min_len = min(len(blended), len(audio_data))
+                            blended = blended[:min_len] + audio_data[:min_len] * w
+                        total_w += w
+                    if blended is not None and total_w > 0:
+                        blended /= total_w
+                        dest = stems_out / f"{stem_name}.wav"
+                        _sf.write(str(dest), blended, file_sr, subtype="FLOAT")
+                        stem_paths[stem_name] = dest
+                        found_stems.add(stem_name)
+                        stem_status = [(s, s in found_stems) for s in expected_stems]
+                        yield _yld(status, progress=92, stem_list=stem_status,
+                                   remaster=remaster_path, info=info_str)
+            else:
+                # Single model — just move stems
+                model_stems = all_model_paths[0][0]
+                for stem_name, sf_path in sorted(model_stems.items()):
+                    dest = stems_out / sf_path.name
+                    shutil.move(str(sf_path), str(dest))
+                    stem_paths[stem_name] = dest
+                    found_stems.add(stem_name)
+                    stem_status = [(s, s in found_stems) for s in expected_stems]
+                    yield _yld(status, progress=92, stem_list=stem_status,
+                               remaster=remaster_path, info=info_str)
 
             shutil.rmtree(str(stems_dir / "_demucs_tmp"), ignore_errors=True)
 
+            # Post-process stems
+            status[-1] = f"[{step}/{total_steps}] Post-processing stems (EQ, gating, compression)..."
+            yield _yld(status, progress=93, stem_list=stem_status, remaster=remaster_path, info=info_str)
+            stem_paths = post_process_stems(stem_paths)
+
             stem_status = [(s, True) for s in expected_stems]
-            status[-1] = f"[{step}/{total_steps}] Stems separated — {len(stem_paths)} tracks ({_elapsed(t_step)})"
+            status[-1] = f"[{step}/{total_steps}] Stems separated + post-processed — {len(stem_paths)} tracks ({_elapsed(t_step)})"
             outputs.append(f"{len(stem_paths)} stems")
 
             stems_zip_path = tmp_dir / "stems.zip"

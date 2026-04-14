@@ -41,6 +41,22 @@ QUALITY_PRESETS = {
     "best":  (10, 0.75),   # ~30 min — studio quality, maximum clarity
 }
 
+# Ensemble: run two models, blend for cleaner separation (best quality only)
+ENSEMBLE_MODELS = [
+    ("htdemucs_ft", 0.6),   # primary — fine-tuned, best single model
+    ("htdemucs",    0.4),   # secondary — different spectral characteristics
+]
+
+# Per-stem DSP tailored to each source type
+STEM_DSP = {
+    "vocals": {"highpass_hz": 80, "deess_hz": 6000, "gate_db": -40},
+    "drums":  {"highpass_hz": 30, "compress": True, "gate_db": -50},
+    "bass":   {"lowpass_hz": 8000, "compress": True, "gate_db": -50},
+    "other":  {"noise_reduce": True, "normalize": True},
+    "guitar": {"highpass_hz": 60, "gate_db": -45},
+    "piano":  {"highpass_hz": 40, "gate_db": -45},
+}
+
 GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
 
 
@@ -207,21 +223,10 @@ def remaster_with_reference(audio_path: Path, reference_path: Path, output_dir: 
 #  STEP 2 — STEM SEPARATION
 # ─────────────────────────────────────────────
 
-def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False, quality: str = "good") -> dict:
-    if not audio_path.exists():
-        raise FileNotFoundError(f"Audio file not found: {audio_path}")
-
-    shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["good"])
-    # Allow env var override for testing
-    shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
-
-    model = "htdemucs_6s" if six_stem else "htdemucs_ft"
-    print(f"  🥁 Separating stems ({model}, quality={quality}, shifts={shifts})…")
-    warn_if_first_run()
-
-    stems_out = output_dir / "stems"
-    stems_out.mkdir(parents=True, exist_ok=True)
-
+def _run_demucs_model(audio_path: Path, output_dir: Path, model: str,
+                      shifts: int, overlap: float) -> dict:
+    """Run a single Demucs model and return {stem_name: Path}."""
+    tmp_out = output_dir / "_demucs_tmp"
     cmd = [
         sys.executable, "-m", "demucs",
         "-n", model,
@@ -229,24 +234,184 @@ def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False, q
         "--overlap", str(overlap),
         "--float32",
         "--clip-mode", "rescale",
-        "-o", str(output_dir / "_demucs_tmp"),
+        "-o", str(tmp_out),
         str(audio_path),
     ]
     subprocess.run(cmd, check=True)
 
-    # Demucs output: _demucs_tmp/{model}/{trackname}/{stem}.wav
     track_name = audio_path.stem
-    demucs_track_dir = output_dir / "_demucs_tmp" / model / track_name
-
+    demucs_dir = tmp_out / model / track_name
     stem_paths = {}
-    for stem_file in demucs_track_dir.glob("*.wav"):
-        dest = stems_out / stem_file.name
-        shutil.move(str(stem_file), str(dest))
-        stem_paths[stem_file.stem] = dest
-        print(f"  ✅ Stem saved → stems/{stem_file.name}")
+    for stem_file in demucs_dir.glob("*.wav"):
+        stem_paths[stem_file.stem] = stem_file
+    return stem_paths
 
-    # Clean up Demucs temp dir
+
+def separate_stems_ensemble(audio_path: Path, output_dir: Path,
+                            quality: str = "best") -> dict:
+    """Run two models and blend for maximum separation quality."""
+    shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["best"])
+    shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
+
+    stems_out = output_dir / "stems"
+    stems_out.mkdir(parents=True, exist_ok=True)
+
+    # Run each model
+    model_results = []
+    for i, (model_name, weight) in enumerate(ENSEMBLE_MODELS):
+        print(f"  🥁 Model {i+1}/{len(ENSEMBLE_MODELS)}: {model_name} (shifts={shifts})…")
+        warn_if_first_run()
+        try:
+            paths = _run_demucs_model(audio_path, output_dir, model_name, shifts, overlap)
+            model_results.append((paths, weight))
+        except Exception as e:
+            print(f"  ⚠️  Model {model_name} failed: {e}")
+            if not model_results:
+                raise  # first model failed — nothing to fall back to
+            print(f"  Using single-model output only.")
+            break
+
+    # Blend stems one at a time (memory efficient)
+    print(f"  🔀 Blending {len(model_results)} model(s)…")
+    all_stem_names = set()
+    for paths, _ in model_results:
+        all_stem_names.update(paths.keys())
+
+    blended_paths = {}
+    for stem_name in sorted(all_stem_names):
+        blended = None
+        total_weight = 0.0
+        sr = None
+        for paths, weight in model_results:
+            if stem_name not in paths:
+                continue
+            audio, sr = sf.read(str(paths[stem_name]), dtype="float32")
+            if blended is None:
+                blended = audio * weight
+            else:
+                # Align lengths (should be identical but be safe)
+                min_len = min(len(blended), len(audio))
+                blended = blended[:min_len] + audio[:min_len] * weight
+            total_weight += weight
+
+        if blended is not None and total_weight > 0:
+            blended /= total_weight  # normalize weights
+            dest = stems_out / f"{stem_name}.wav"
+            sf.write(str(dest), blended, sr, subtype="FLOAT")
+            blended_paths[stem_name] = dest
+            print(f"  ✅ Blended → stems/{stem_name}.wav")
+
+    # Clean up all model temp dirs
     shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
+
+    return blended_paths
+
+
+def post_process_stems(stem_paths: dict, sr: int = 44100) -> dict:
+    """Apply per-stem DSP: EQ, gating, compression, noise reduction."""
+    try:
+        from pedalboard import (
+            Pedalboard, HighpassFilter, LowpassFilter, HighShelfFilter,
+            Compressor, NoiseGate,
+        )
+        has_pedalboard = True
+    except ImportError:
+        print("  ⚠️  pedalboard not available — skipping stem post-processing")
+        return stem_paths
+
+    print("  🎛  Post-processing stems…")
+
+    for stem_name, stem_path in stem_paths.items():
+        dsp_config = STEM_DSP.get(stem_name)
+        if not dsp_config:
+            continue
+
+        audio, file_sr = sf.read(str(stem_path), dtype="float32")
+        # pedalboard wants (channels, samples)
+        if audio.ndim == 1:
+            audio = np.expand_dims(audio, axis=0)
+        else:
+            audio = audio.T
+
+        effects = []
+
+        if "highpass_hz" in dsp_config:
+            effects.append(HighpassFilter(cutoff_frequency_hz=dsp_config["highpass_hz"]))
+
+        if "lowpass_hz" in dsp_config:
+            effects.append(LowpassFilter(cutoff_frequency_hz=dsp_config["lowpass_hz"]))
+
+        if "deess_hz" in dsp_config:
+            effects.append(HighShelfFilter(cutoff_frequency_hz=dsp_config["deess_hz"], gain_db=-3.0))
+
+        if dsp_config.get("compress"):
+            effects.append(Compressor(threshold_db=-18, ratio=3.0, attack_ms=5.0, release_ms=80.0))
+
+        if "gate_db" in dsp_config:
+            effects.append(NoiseGate(threshold_db=dsp_config["gate_db"]))
+
+        if effects:
+            board = Pedalboard(effects)
+            audio = board(audio, file_sr)
+
+        # Noise reduction for "other" stem
+        if dsp_config.get("noise_reduce"):
+            # Transpose back for noisereduce (channels, samples) → process per channel
+            processed = np.stack([
+                nr.reduce_noise(y=ch, sr=file_sr, stationary=False, prop_decrease=0.5)
+                for ch in audio
+            ])
+            audio = processed
+
+        # Normalize "other" stem
+        if dsp_config.get("normalize"):
+            meter = pyln.Meter(file_sr)
+            audio_for_lufs = audio.T  # pyloudnorm wants (samples, channels)
+            loudness = meter.integrated_loudness(audio_for_lufs)
+            if np.isfinite(loudness):
+                audio_for_lufs = pyln.normalize.loudness(audio_for_lufs, loudness, -14.0)
+                audio = audio_for_lufs.T
+
+        # Write back — transpose to (samples, channels)
+        sf.write(str(stem_path), audio.T, file_sr, subtype="FLOAT")
+        print(f"  ✅ Post-processed → {stem_name}")
+
+    return stem_paths
+
+
+def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False,
+                   quality: str = "good") -> dict:
+    """Separate stems with optional ensemble and post-processing."""
+    if not audio_path.exists():
+        raise FileNotFoundError(f"Audio file not found: {audio_path}")
+
+    warn_if_first_run()
+
+    # Ensemble mode: best quality + 4-stem only
+    if quality == "best" and not six_stem:
+        stem_paths = separate_stems_ensemble(audio_path, output_dir, quality=quality)
+    else:
+        # Single model
+        shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["good"])
+        shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
+        model = "htdemucs_6s" if six_stem else "htdemucs_ft"
+        print(f"  🥁 Separating stems ({model}, quality={quality}, shifts={shifts})…")
+
+        paths = _run_demucs_model(audio_path, output_dir, model, shifts, overlap)
+
+        stems_out = output_dir / "stems"
+        stems_out.mkdir(parents=True, exist_ok=True)
+        stem_paths = {}
+        for stem_name, stem_file in paths.items():
+            dest = stems_out / stem_file.name
+            shutil.move(str(stem_file), str(dest))
+            stem_paths[stem_name] = dest
+            print(f"  ✅ Stem saved → stems/{stem_file.name}")
+
+        shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
+
+    # Always post-process
+    stem_paths = post_process_stems(stem_paths)
 
     return stem_paths
 

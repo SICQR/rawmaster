@@ -122,6 +122,71 @@ class TestRemasterWithReference:
         assert out.exists()
 
 
+class TestPostProcessStems:
+    def _make_stereo_sine(self, path, freq=440.0, duration=3.0, sr=44100, amplitude=0.5):
+        t = np.linspace(0, duration, int(sr * duration), endpoint=False)
+        stereo = np.stack([
+            np.sin(2 * np.pi * freq * t) * amplitude,
+            np.sin(2 * np.pi * freq * t) * amplitude,
+        ]).T.astype(np.float32)
+        sf.write(str(path), stereo, sr)
+        return path
+
+    def test_vocals_processed(self, tmp_path):
+        from rawmaster import post_process_stems
+        vocals_path = self._make_stereo_sine(tmp_path / "vocals.wav", freq=300.0)
+        original_data, _ = sf.read(str(vocals_path))
+        result = post_process_stems({"vocals": vocals_path})
+        processed_data, _ = sf.read(str(result["vocals"]))
+        # Data should be different after DSP
+        assert not np.array_equal(original_data, processed_data)
+
+    def test_drums_processed(self, tmp_path):
+        from rawmaster import post_process_stems
+        drums_path = self._make_stereo_sine(tmp_path / "drums.wav", freq=100.0)
+        original_data, _ = sf.read(str(drums_path))
+        result = post_process_stems({"drums": drums_path})
+        processed_data, _ = sf.read(str(result["drums"]))
+        assert not np.array_equal(original_data, processed_data)
+
+    def test_bass_lowpass_attenuates_highs(self, tmp_path):
+        from rawmaster import post_process_stems
+        # Create bass stem with strong 12kHz content (should be filtered)
+        sr = 44100
+        t = np.linspace(0, 3.0, int(sr * 3.0), endpoint=False)
+        high_freq = np.stack([
+            np.sin(2 * np.pi * 12000 * t) * 0.5,
+            np.sin(2 * np.pi * 12000 * t) * 0.5,
+        ]).T.astype(np.float32)
+        bass_path = tmp_path / "bass.wav"
+        sf.write(str(bass_path), high_freq, sr)
+        original_rms = np.sqrt(np.mean(high_freq**2))
+        post_process_stems({"bass": bass_path})
+        processed, _ = sf.read(str(bass_path))
+        processed_rms = np.sqrt(np.mean(processed**2))
+        # 12kHz should be heavily attenuated by the 8kHz lowpass
+        assert processed_rms < original_rms * 0.5
+
+    def test_unknown_stem_unchanged(self, tmp_path):
+        from rawmaster import post_process_stems
+        weird_path = self._make_stereo_sine(tmp_path / "banjo.wav")
+        original_data, _ = sf.read(str(weird_path))
+        result = post_process_stems({"banjo": weird_path})
+        processed_data, _ = sf.read(str(result["banjo"]))
+        assert np.array_equal(original_data, processed_data)
+
+    def test_returns_same_keys(self, tmp_path):
+        from rawmaster import post_process_stems
+        paths = {
+            "vocals": self._make_stereo_sine(tmp_path / "vocals.wav"),
+            "drums": self._make_stereo_sine(tmp_path / "drums.wav"),
+            "bass": self._make_stereo_sine(tmp_path / "bass.wav"),
+            "other": self._make_stereo_sine(tmp_path / "other.wav"),
+        }
+        result = post_process_stems(paths)
+        assert set(result.keys()) == set(paths.keys())
+
+
 class TestLicense:
     @pytest.mark.skipif(
         os.environ.get("RAWMASTER_SKIP_LICENSE") == "1",
