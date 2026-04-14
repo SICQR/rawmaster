@@ -175,13 +175,20 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
     if do_stems:
         step += 1
         t_step = time.time()
-        six_stem = (str(n_stems) == "6")
-        expected_stems = ["vocals", "drums", "bass", "other"]
-        if six_stem:
-            expected_stems += ["guitar", "piano"]
+        is_max = (str(n_stems).lower() == "max")
+        six_stem = (str(n_stems) == "6") or is_max
+        if is_max:
+            expected_stems = [
+                "lead_vocals", "backing_vocals", "kick", "snare_hats", "cymbals",
+                "bass", "guitar", "piano", "sub_synths", "mid_synths", "high_fx",
+            ]
+        elif six_stem:
+            expected_stems = ["vocals", "drums", "bass", "other", "guitar", "piano"]
+        else:
+            expected_stems = ["vocals", "drums", "bass", "other"]
 
         q = quality_setting if quality_setting in ("fast", "good", "best") else "best"
-        use_ensemble = (q == "best" and not six_stem)
+        use_ensemble = (q == "best" and not six_stem and not is_max)
         shifts, overlap = QUALITY_PRESETS[q]
         shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
 
@@ -310,9 +317,19 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
 
             shutil.rmtree(str(stems_dir / "_demucs_tmp"), ignore_errors=True)
 
+            # Max mode: cascade into 12 sub-stems
+            if is_max:
+                from rawmaster import sub_separate_stems
+                status[-1] = f"[{step}/{total_steps}] Sub-separating into 12 stems (vocals, drums, other)..."
+                yield _yld(status, progress=93, stem_list=stem_status, remaster=remaster_path, info=info_str)
+                stem_paths = sub_separate_stems(stem_paths, stems_dir, quality=q)
+                found_stems = set(stem_paths.keys())
+                stem_status = [(s, s in found_stems) for s in expected_stems]
+                yield _yld(status, progress=96, stem_list=stem_status, remaster=remaster_path, info=info_str)
+
             # Post-process stems
             status[-1] = f"[{step}/{total_steps}] Post-processing stems (EQ, gating, compression)..."
-            yield _yld(status, progress=93, stem_list=stem_status, remaster=remaster_path, info=info_str)
+            yield _yld(status, progress=97, stem_list=stem_status, remaster=remaster_path, info=info_str)
             stem_paths = post_process_stems(stem_paths)
 
             stem_status = [(s, True) for s in expected_stems]
@@ -388,11 +405,11 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
             )
             do_stems = gr.Checkbox(label="Separate stems", value=True)
             n_stems = gr.Radio(
-                ["4", "6"],
+                ["4", "6", "max"],
                 label="Number of stems",
-                value="4",
+                value="max",
                 visible=True,
-                info="4 = vocals/drums/bass/other  |  6 = adds guitar + piano",
+                info="4 = core  |  6 = + guitar/piano  |  max = 12 sub-stems (lead/backing vocals, kick, snare, cymbals, bass, guitar, piano, synths, FX)",
             )
             quality = gr.Radio(
                 ["fast", "good", "best"],

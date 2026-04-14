@@ -34,6 +34,9 @@ BANNER = r"""
 
 SUPPORTED_FORMATS = {".mp3", ".wav", ".flac", ".aiff", ".aif", ".ogg", ".m4a"}
 
+# Stem modes
+STEM_MODES = {4, 6, 12}  # 12 = "max" mode with cascaded sub-separation
+
 # Stem separation quality presets: (shifts, overlap)
 QUALITY_PRESETS = {
     "fast":  (2,  0.25),   # ~5 min per track — rough separation
@@ -55,6 +58,15 @@ STEM_DSP = {
     "other":  {"noise_reduce": True, "normalize": True},
     "guitar": {"highpass_hz": 60, "gate_db": -45},
     "piano":  {"highpass_hz": 40, "gate_db": -45},
+    # Sub-stems (max mode)
+    "lead_vocals":    {"highpass_hz": 80, "deess_hz": 6000, "gate_db": -40},
+    "backing_vocals": {"highpass_hz": 80, "gate_db": -45},
+    "kick":           {"lowpass_hz": 200, "gate_db": -50},
+    "snare_hats":     {"highpass_hz": 200, "lowpass_hz": 8000, "gate_db": -50},
+    "cymbals":        {"highpass_hz": 8000, "gate_db": -50},
+    "sub_synths":     {"lowpass_hz": 250, "gate_db": -50},
+    "mid_synths":     {"highpass_hz": 250, "lowpass_hz": 4000, "gate_db": -45},
+    "high_fx":        {"highpass_hz": 4000, "gate_db": -45},
 }
 
 GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
@@ -379,19 +391,146 @@ def post_process_stems(stem_paths: dict, sr: int = 44100) -> dict:
     return stem_paths
 
 
+def _bandpass_split(audio_path: Path, output_dir: Path, stem_name: str,
+                    bands: list, sr: int = 44100) -> dict:
+    """Split a stem into frequency bands. bands = [(name, low_hz, high_hz), ...]"""
+    from scipy.signal import butter, sosfilt
+
+    audio, file_sr = sf.read(str(audio_path), dtype="float32")
+    if audio.ndim == 1:
+        audio = np.expand_dims(audio, axis=1)
+
+    sub_paths = {}
+    for band_name, low_hz, high_hz in bands:
+        filtered = np.zeros_like(audio)
+        for ch in range(audio.shape[1]):
+            if low_hz and high_hz:
+                sos = butter(4, [low_hz, high_hz], btype="band", fs=file_sr, output="sos")
+            elif low_hz:
+                sos = butter(4, low_hz, btype="high", fs=file_sr, output="sos")
+            elif high_hz:
+                sos = butter(4, high_hz, btype="low", fs=file_sr, output="sos")
+            else:
+                filtered[:, ch] = audio[:, ch]
+                continue
+            filtered[:, ch] = sosfilt(sos, audio[:, ch])
+
+        out_path = output_dir / f"{band_name}.wav"
+        sf.write(str(out_path), filtered, file_sr, subtype="FLOAT")
+        sub_paths[band_name] = out_path
+        print(f"  ✅ Sub-stem → {band_name}.wav")
+
+    return sub_paths
+
+
+def sub_separate_stems(stem_paths: dict, output_dir: Path, quality: str = "best") -> dict:
+    """Cascade 6-stem output into 12 sub-stems via re-separation and frequency splitting."""
+    print("  🔬 Sub-separating into 12 stems…")
+    stems_out = output_dir / "stems"
+    stems_out.mkdir(parents=True, exist_ok=True)
+    result = {}
+
+    # ── Vocals → lead + backing via re-running Demucs on vocal stem ──
+    if "vocals" in stem_paths:
+        vocals_path = stem_paths["vocals"]
+        print("  🎤 Splitting vocals → lead + backing…")
+        try:
+            shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["best"])
+            shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
+            vocal_sub = _run_demucs_model(vocals_path, output_dir, "htdemucs_ft", shifts, overlap)
+            # Demucs on a vocal stem: "vocals" = lead, "other" = backing/harmonies
+            if "vocals" in vocal_sub:
+                dest = stems_out / "lead_vocals.wav"
+                shutil.move(str(vocal_sub["vocals"]), str(dest))
+                result["lead_vocals"] = dest
+                print(f"  ✅ Lead vocals extracted")
+            # Everything else Demucs finds = backing
+            backing_parts = [v for k, v in vocal_sub.items() if k != "vocals"]
+            if backing_parts:
+                # Merge all non-vocal parts into one backing stem
+                backing_audio = None
+                backing_sr = None
+                for bp in backing_parts:
+                    a, backing_sr = sf.read(str(bp), dtype="float32")
+                    backing_audio = a if backing_audio is None else backing_audio[:len(a)] + a[:len(backing_audio)]
+                dest = stems_out / "backing_vocals.wav"
+                sf.write(str(dest), backing_audio, backing_sr, subtype="FLOAT")
+                result["backing_vocals"] = dest
+                print(f"  ✅ Backing vocals extracted")
+            shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
+        except Exception as e:
+            print(f"  ⚠️  Vocal sub-separation failed: {e} — keeping original")
+            result["vocals"] = stem_paths["vocals"]
+
+    # ── Drums → kick, snare+hats, cymbals via frequency bands ──
+    if "drums" in stem_paths:
+        print("  🥁 Splitting drums → kick, snare+hats, cymbals…")
+        drum_subs = _bandpass_split(
+            stem_paths["drums"], stems_out, "drums",
+            [
+                ("kick",       None, 200),
+                ("snare_hats", 200,  8000),
+                ("cymbals",    8000, None),
+            ],
+        )
+        result.update(drum_subs)
+
+    # ── Bass → keep as-is ──
+    if "bass" in stem_paths:
+        dest = stems_out / "bass.wav"
+        if stem_paths["bass"] != dest:
+            shutil.copy2(str(stem_paths["bass"]), str(dest))
+        result["bass"] = dest
+
+    # ── Guitar → keep as-is ──
+    if "guitar" in stem_paths:
+        dest = stems_out / "guitar.wav"
+        if stem_paths["guitar"] != dest:
+            shutil.copy2(str(stem_paths["guitar"]), str(dest))
+        result["guitar"] = dest
+
+    # ── Piano → keep as-is ──
+    if "piano" in stem_paths:
+        dest = stems_out / "piano.wav"
+        if stem_paths["piano"] != dest:
+            shutil.copy2(str(stem_paths["piano"]), str(dest))
+        result["piano"] = dest
+
+    # ── Other → sub_synths, mid_synths, high_fx via frequency bands ──
+    if "other" in stem_paths:
+        print("  🎶 Splitting other → sub synths, mid synths, high FX…")
+        other_subs = _bandpass_split(
+            stem_paths["other"], stems_out, "other",
+            [
+                ("sub_synths",  None, 250),
+                ("mid_synths",  250,  4000),
+                ("high_fx",     4000, None),
+            ],
+        )
+        result.update(other_subs)
+
+    return result
+
+
 def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False,
-                   quality: str = "good") -> dict:
-    """Separate stems with optional ensemble and post-processing."""
+                   quality: str = "good", max_stems: bool = False) -> dict:
+    """Separate stems with optional ensemble, sub-separation, and post-processing."""
     if not audio_path.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
     warn_if_first_run()
 
-    # Ensemble mode: best quality + 4-stem only
+    # Max mode: force 6-stem + sub-separation
+    if max_stems:
+        six_stem = True
+        quality = "best"
+
+    # Choose separation strategy
     if quality == "best" and not six_stem:
+        # Ensemble mode (4-stem only — no second 6-stem model)
         stem_paths = separate_stems_ensemble(audio_path, output_dir, quality=quality)
     else:
-        # Single model
+        # Single model (4 or 6 stem)
         shifts, overlap = QUALITY_PRESETS.get(quality, QUALITY_PRESETS["good"])
         shifts = int(os.environ.get("RAWMASTER_TEST_SHIFTS", str(shifts)))
         model = "htdemucs_6s" if six_stem else "htdemucs_ft"
@@ -409,6 +548,10 @@ def separate_stems(audio_path: Path, output_dir: Path, six_stem: bool = False,
             print(f"  ✅ Stem saved → stems/{stem_file.name}")
 
         shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
+
+    # Max mode: cascade into 12 sub-stems
+    if max_stems:
+        stem_paths = sub_separate_stems(stem_paths, output_dir, quality=quality)
 
     # Always post-process
     stem_paths = post_process_stems(stem_paths)
@@ -501,6 +644,7 @@ def process_file(
     six_stem: bool = False,
     reference_path: Path = None,
     quality: str = "good",
+    max_stems: bool = False,
 ):
     if not audio_path.exists():
         print(f"  ❌ File not found: {audio_path}")
@@ -532,7 +676,7 @@ def process_file(
 
     stem_paths = {}
     if do_stems or do_midi or do_midi_all:
-        stem_paths = separate_stems(audio_path, output_root, six_stem=six_stem, quality=quality)
+        stem_paths = separate_stems(audio_path, output_root, six_stem=six_stem, quality=quality, max_stems=max_stems)
 
     if do_midi or do_midi_all:
         extract_midi(stem_paths, output_root, midi_all=do_midi_all)
@@ -552,8 +696,8 @@ def main():
         description="Smash Daddys Audio Tools — stem separation, remaster, MIDI, BPM/key",
     )
     parser.add_argument("input", nargs="?", help="Audio file or folder path")
-    parser.add_argument("--stems", nargs="?", const=4, type=int,
-                        metavar="N", help="Separate stems (4 or 6)")
+    parser.add_argument("--stems", nargs="?", const=4,
+                        metavar="N", help="Separate stems: 4, 6, or max (12 sub-stems)")
     parser.add_argument("--midi", action="store_true",
                         help="Extract MIDI from bass stem")
     parser.add_argument("--midi-all", action="store_true",
@@ -577,8 +721,23 @@ def main():
     check_license()
 
     input_path = Path(args.input)
-    six_stem = (args.stems == 6) if args.stems is not None else False
+
+    # Parse --stems: can be 4, 6, or "max"
+    max_stems = False
+    six_stem = False
     do_stems = args.stems is not None
+    if args.stems is not None:
+        if str(args.stems).lower() == "max":
+            max_stems = True
+            six_stem = True  # max mode uses 6-stem as base
+        else:
+            try:
+                n = int(args.stems)
+                six_stem = (n == 6)
+            except ValueError:
+                print(f"  ❌ Invalid stem count: {args.stems}. Use 4, 6, or max.")
+                sys.exit(1)
+
     do_midi = args.midi
     do_midi_all = args.midi_all
     do_info = args.info
@@ -599,9 +758,9 @@ def main():
             sys.exit(1)
         print(f"  📂 Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
         for f in audio_files:
-            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality)
+            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems)
     else:
-        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality)
+        process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems)
 
 
 if __name__ == "__main__":
