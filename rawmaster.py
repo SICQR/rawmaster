@@ -77,9 +77,9 @@ STEM_DSP = {
 # Gumroad product IDs — update these after creating products on Gumroad
 # Find each ID in: Gumroad Dashboard → Product → Settings → Integrations
 GUMROAD_PRODUCT_IDS = [
-    "kxiip",      # CLI (£19) — UPDATE THIS after creating on Gumroad
-    # "XXXXX",    # Desktop (£29) — UNCOMMENT + UPDATE after creating
-    # "XXXXX",    # Bundle (£39) — UNCOMMENT + UPDATE after creating
+    "iolsms",     # CLI (£19)
+    "kmgake",     # Desktop (£29)
+    "uvznyb",     # Toolkit Bundle (£39)
 ]
 
 
