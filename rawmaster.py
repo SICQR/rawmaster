@@ -74,7 +74,13 @@ STEM_DSP = {
     "high_fx": {},
 }
 
-GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
+# Gumroad product IDs — update these after creating products on Gumroad
+# Find each ID in: Gumroad Dashboard → Product → Settings → Integrations
+GUMROAD_PRODUCT_IDS = [
+    "kxiip",      # CLI (£19) — UPDATE THIS after creating on Gumroad
+    # "XXXXX",    # Desktop (£29) — UNCOMMENT + UPDATE after creating
+    # "XXXXX",    # Bundle (£39) — UNCOMMENT + UPDATE after creating
+]
 
 
 # ─────────────────────────────────────────────
@@ -82,17 +88,24 @@ GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
 # ─────────────────────────────────────────────
 
 def validate_license(key: str) -> bool:
-    resp = requests.post(
-        "https://api.gumroad.com/v2/licenses/verify",
-        data={
-            "product_id": GUMROAD_PRODUCT_ID,
-            "license_key": key,
-            "increment_uses_count": "false",
-        },
-        timeout=10,
-    )
-    data = resp.json()
-    return data.get("success", False) and not data.get("purchase", {}).get("refunded", False)
+    """Try all product IDs — any valid match means the license is good."""
+    for product_id in GUMROAD_PRODUCT_IDS:
+        try:
+            resp = requests.post(
+                "https://api.gumroad.com/v2/licenses/verify",
+                data={
+                    "product_id": product_id,
+                    "license_key": key,
+                    "increment_uses_count": "false",
+                },
+                timeout=10,
+            )
+            data = resp.json()
+            if data.get("success") and not data.get("purchase", {}).get("refunded", False):
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def check_license():
