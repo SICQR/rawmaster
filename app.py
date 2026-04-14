@@ -28,6 +28,7 @@ STEM_ICONS = {
     "guitar": "🎵", "piano": "🎹",
 }
 
+
 def _elapsed(t0):
     """Format elapsed time since t0."""
     s = time.time() - t0
@@ -73,6 +74,7 @@ def _render_status(lines, progress=None, stem_list=None):
         html += '</div>'
     html += '</div>'
     return html
+
 
 css = """
 body, .gradio-container { background: #080808 !important; color: #f0ece4 !important; }
@@ -346,15 +348,17 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
             yield _yld(status, remaster=remaster_path, info=info_str)
             return
 
-        yield _yld(status, progress=100, stem_list=stem_status,
-                    remaster=remaster_path, stems_zip=stems_zip_path, info=info_str)
+        yield _yld(
+            status, progress=100, stem_list=stem_status,
+            remaster=remaster_path, stems_zip=stems_zip_path, info=info_str)
 
         if do_midi:
             step += 1
             t_step = time.time()
             status.append(f"[{step}/{total_steps}] Extracting MIDI...")
-            yield _yld(status, progress=100, stem_list=stem_status,
-                        remaster=remaster_path, stems_zip=stems_zip_path, info=info_str)
+            yield _yld(
+                status, progress=100, stem_list=stem_status,
+                remaster=remaster_path, stems_zip=stems_zip_path, info=info_str)
 
             try:
                 midi_dir = tmp_dir / "midi"

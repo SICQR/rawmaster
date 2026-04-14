@@ -39,15 +39,15 @@ STEM_MODES = {4, 6, 12}  # 12 = "max" mode with cascaded sub-separation
 
 # Stem separation quality presets: (shifts, overlap)
 QUALITY_PRESETS = {
-    "fast":  (2,  0.25),   # ~5 min per track — rough separation
-    "good":  (5,  0.50),   # ~15 min — much cleaner, recommended
-    "best":  (10, 0.75),   # ~30 min — studio quality, maximum clarity
+    "fast": (2, 0.25),   # ~5 min per track — rough separation
+    "good": (5, 0.50),   # ~15 min — much cleaner, recommended
+    "best": (10, 0.75),  # ~30 min — studio quality, maximum clarity
 }
 
 # Ensemble: run two models, blend for cleaner separation (best quality only)
 ENSEMBLE_MODELS = [
-    ("htdemucs_ft", 0.6),   # primary — fine-tuned, best single model
-    ("htdemucs",    0.4),   # secondary — different spectral characteristics
+    ("htdemucs_ft", 0.6),  # primary — fine-tuned, best single model
+    ("htdemucs", 0.4),     # secondary — different spectral characteristics
 ]
 
 # BS-Roformer model for best-in-class vocal separation (12.9 dB SDR vs Demucs 10.8)
@@ -58,20 +58,20 @@ ROFORMER_MODEL = "model_bs_roformer_ep_317_sdr_12.9755.ckpt"
 # No compression, no de-essing, no noise reduction — all hurt SDR.
 STEM_DSP = {
     "vocals": {"highpass_hz": 55},
-    "drums":  {"highpass_hz": 20},
-    "bass":   {},
-    "other":  {},
+    "drums": {"highpass_hz": 20},
+    "bass": {},
+    "other": {},
     "guitar": {"highpass_hz": 45},
-    "piano":  {"highpass_hz": 30},
+    "piano": {"highpass_hz": 30},
     # Sub-stems (max mode) — filters are part of the bandpass split already
-    "lead_vocals":    {"highpass_hz": 55},
+    "lead_vocals": {"highpass_hz": 55},
     "backing_vocals": {"highpass_hz": 55},
-    "kick":           {},
-    "snare_hats":     {},
-    "cymbals":        {},
-    "sub_synths":     {},
-    "mid_synths":     {},
-    "high_fx":        {},
+    "kick": {},
+    "snare_hats": {},
+    "cymbals": {},
+    "sub_synths": {},
+    "mid_synths": {},
+    "high_fx": {},
 }
 
 GUMROAD_PRODUCT_ID = "kxiip"  # RAWMASTER CLI product ID
@@ -272,7 +272,7 @@ def _run_roformer_vocals(audio_path: Path, output_dir: Path) -> dict:
         print("  ⚠️  audio-separator not installed. Install with: pip install audio-separator[cpu]")
         return {}
 
-    print(f"  🎤 BS-Roformer vocal separation (12.9 dB SDR)…")
+    print("  🎤 BS-Roformer vocal separation (12.9 dB SDR)…")
     out_dir = output_dir / "_roformer_tmp"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -313,7 +313,7 @@ def separate_stems_ensemble(audio_path: Path, output_dir: Path,
         roformer_paths = _run_roformer_vocals(audio_path, output_dir)
         if "vocals" in roformer_paths:
             roformer_vocals = roformer_paths["vocals"]
-            print(f"  ✅ BS-Roformer vocals ready")
+            print("  ✅ BS-Roformer vocals ready")
     except Exception as e:
         print(f"  ⚠️  BS-Roformer failed: {e} — using Demucs vocals only")
 
@@ -329,7 +329,7 @@ def separate_stems_ensemble(audio_path: Path, output_dir: Path,
             print(f"  ⚠️  Model {model_name} failed: {e}")
             if not model_results:
                 raise
-            print(f"  Using single-model output only.")
+            print("  Using single-model output only.")
             break
 
     # Step 3: Blend Demucs stems
@@ -363,7 +363,7 @@ def separate_stems_ensemble(audio_path: Path, output_dir: Path,
 
     # Step 4: Replace Demucs vocals with BS-Roformer/Demucs hybrid (70/30 blend)
     if roformer_vocals and "vocals" in blended_paths:
-        print(f"  🎤 Blending BS-Roformer vocals (70%) + Demucs vocals (30%)…")
+        print("  🎤 Blending BS-Roformer vocals (70%) + Demucs vocals (30%)…")
         roformer_audio, sr = sf.read(str(roformer_vocals), dtype="float32")
         demucs_audio, _ = sf.read(str(blended_paths["vocals"]), dtype="float32")
         min_len = min(len(roformer_audio), len(demucs_audio))
@@ -371,7 +371,7 @@ def separate_stems_ensemble(audio_path: Path, output_dir: Path,
         dest = stems_out / "vocals.wav"
         sf.write(str(dest), hybrid_vocals, sr, subtype="FLOAT")
         blended_paths["vocals"] = dest
-        print(f"  ✅ Hybrid vocals → stems/vocals.wav (BS-Roformer + Demucs)")
+        print("  ✅ Hybrid vocals → stems/vocals.wav (BS-Roformer + Demucs)")
 
     # Clean up
     shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
@@ -484,7 +484,7 @@ def sub_separate_stems(stem_paths: dict, output_dir: Path, quality: str = "best"
                 dest = stems_out / "lead_vocals.wav"
                 shutil.move(str(vocal_sub["vocals"]), str(dest))
                 result["lead_vocals"] = dest
-                print(f"  ✅ Lead vocals extracted")
+                print("  ✅ Lead vocals extracted")
             # Everything else Demucs finds = backing
             backing_parts = [v for k, v in vocal_sub.items() if k != "vocals"]
             if backing_parts:
@@ -497,7 +497,7 @@ def sub_separate_stems(stem_paths: dict, output_dir: Path, quality: str = "best"
                 dest = stems_out / "backing_vocals.wav"
                 sf.write(str(dest), backing_audio, backing_sr, subtype="FLOAT")
                 result["backing_vocals"] = dest
-                print(f"  ✅ Backing vocals extracted")
+                print("  ✅ Backing vocals extracted")
             shutil.rmtree(str(output_dir / "_demucs_tmp"), ignore_errors=True)
         except Exception as e:
             print(f"  ⚠️  Vocal sub-separation failed: {e} — keeping original")
@@ -509,9 +509,9 @@ def sub_separate_stems(stem_paths: dict, output_dir: Path, quality: str = "best"
         drum_subs = _bandpass_split(
             stem_paths["drums"], stems_out, "drums",
             [
-                ("kick",       None, 200),
-                ("snare_hats", 200,  8000),
-                ("cymbals",    8000, None),
+                ("kick", None, 200),
+                ("snare_hats", 200, 8000),
+                ("cymbals", 8000, None),
             ],
         )
         result.update(drum_subs)
@@ -543,9 +543,9 @@ def sub_separate_stems(stem_paths: dict, output_dir: Path, quality: str = "best"
         other_subs = _bandpass_split(
             stem_paths["other"], stems_out, "other",
             [
-                ("sub_synths",  None, 250),
-                ("mid_synths",  250,  4000),
-                ("high_fx",     4000, None),
+                ("sub_synths", None, 250),
+                ("mid_synths", 250, 4000),
+                ("high_fx", 4000, None),
             ],
         )
         result.update(other_subs)
@@ -682,15 +682,22 @@ _NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 for i, note in enumerate(_NOTE_NAMES):
     # Major triad: root + major third (4) + perfect fifth (7)
     maj = np.zeros(12)
-    maj[i] = 1; maj[(i + 4) % 12] = 1; maj[(i + 7) % 12] = 1
+    maj[i] = 1
+    maj[(i + 4) % 12] = 1
+    maj[(i + 7) % 12] = 1
     _CHORD_TEMPLATES[note] = maj
     # Minor triad: root + minor third (3) + perfect fifth (7)
     mi = np.zeros(12)
-    mi[i] = 1; mi[(i + 3) % 12] = 1; mi[(i + 7) % 12] = 1
+    mi[i] = 1
+    mi[(i + 3) % 12] = 1
+    mi[(i + 7) % 12] = 1
     _CHORD_TEMPLATES[f"{note}m"] = mi
     # Dominant 7th: root + major third (4) + fifth (7) + minor seventh (10)
     dom7 = np.zeros(12)
-    dom7[i] = 1; dom7[(i + 4) % 12] = 1; dom7[(i + 7) % 12] = 1; dom7[(i + 10) % 12] = 1
+    dom7[i] = 1
+    dom7[(i + 4) % 12] = 1
+    dom7[(i + 7) % 12] = 1
+    dom7[(i + 10) % 12] = 1
     _CHORD_TEMPLATES[f"{note}7"] = dom7
 
 
