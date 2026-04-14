@@ -100,6 +100,9 @@ Any non-empty value works — `1`, `true`, `yes`, etc. The launcher at `/usr/loc
 ```bash
 rawmaster track.mp3                    # remaster only
 rawmaster track.mp3 --ref pro_mix.wav # reference mastering (match EQ + loudness)
+rawmaster track.mp3 --chords          # detect chord progression → chords.txt
+rawmaster track.mp3 --speed 0.8      # slow down to 80%
+rawmaster track.mp3 --pitch +2       # shift pitch up 2 semitones
 rawmaster track.mp3 --stems           # remaster + 4 stems
 rawmaster track.mp3 --stems --midi    # stems + MIDI (bass only)
 rawmaster track.mp3 --stems --midi-all # stems + MIDI (bass + vocals)

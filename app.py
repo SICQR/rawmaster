@@ -101,7 +101,7 @@ def _yld(status, progress=None, stem_list=None, remaster=None, stems_zip=None, m
     )
 
 
-def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do_midi, midi_all):
+def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do_midi, midi_all, do_chords, speed_val, pitch_val):
     if audio_input is None:
         yield _yld(["Drop a track above and click RAWMASTER IT."])
         return
@@ -117,7 +117,14 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="rawmaster_"))
     t0 = time.time()
-    total_steps = 2 + (1 if do_stems else 0) + (1 if do_midi and do_stems else 0)
+    has_speed_pitch = (speed_val and float(speed_val) != 1.0) or (pitch_val and float(pitch_val) != 0)
+    total_steps = (
+        2
+        + (1 if do_chords else 0)
+        + (1 if has_speed_pitch else 0)
+        + (1 if do_stems else 0)
+        + (1 if do_midi and do_stems else 0)
+    )
     step = 0
     status = []
     outputs = []
@@ -138,9 +145,26 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
         status[-1] = f"[{step}/{total_steps}] BPM + Key detected ({_elapsed(t0)})"
     except Exception as e:
         info_str = ""
+        info = {}
         status[-1] = f"[{step}/{total_steps}] BPM/Key failed: {e}"
 
     yield _yld(status, info=info_str)
+
+    # Chord detection (if enabled)
+    if do_chords:
+        step += 1
+        t_step = time.time()
+        status.append(f"[{step}/{total_steps}] Detecting chords...")
+        yield _yld(status, info=info_str)
+        try:
+            from rawmaster import detect_chords
+            chords = detect_chords(audio_path, tmp_dir / "chords", bpm=info.get("bpm", 120))
+            chord_names = [c for _, c in chords[:8]]
+            info_str += f"  |  Chords: {' → '.join(chord_names)}"
+            status[-1] = f"[{step}/{total_steps}] Chords detected — {len(chords)} changes ({_elapsed(t_step)})"
+        except Exception as e:
+            status[-1] = f"[{step}/{total_steps}] Chord detection failed: {e}"
+        yield _yld(status, info=info_str)
 
     # Step 2: Remaster
     step += 1
@@ -169,6 +193,28 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
         return
 
     yield _yld(status, remaster=remaster_path, info=info_str)
+
+    # Speed/pitch adjustment
+    if has_speed_pitch:
+        step += 1
+        t_step = time.time()
+        spd = float(speed_val) if speed_val else None
+        pit = float(pitch_val) if pitch_val else None
+        label = []
+        if spd and spd != 1.0:
+            label.append(f"{spd}x speed")
+        if pit and pit != 0:
+            label.append(f"{pit:+.0f} semitones")
+        status.append(f"[{step}/{total_steps}] Adjusting {' + '.join(label)}...")
+        yield _yld(status, remaster=remaster_path, info=info_str)
+        try:
+            from rawmaster import change_speed_pitch
+            change_speed_pitch(remaster_path, tmp_dir / "remaster", speed=spd, pitch_semitones=pit)
+            status[-1] = f"[{step}/{total_steps}] Speed/pitch adjusted ({_elapsed(t_step)})"
+            outputs.append(" + ".join(label))
+        except Exception as e:
+            status[-1] = f"[{step}/{total_steps}] Speed/pitch failed: {e}"
+        yield _yld(status, remaster=remaster_path, info=info_str)
 
     stems_zip_path = None
     midi_zip_path = None
@@ -432,6 +478,25 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
                 value=False,
                 visible=False,
             )
+            gr.Markdown("---")
+            do_chords = gr.Checkbox(label="Detect chord progression", value=True)
+            with gr.Row():
+                speed_val = gr.Number(
+                    label="Speed",
+                    value=1.0,
+                    minimum=0.25,
+                    maximum=4.0,
+                    step=0.05,
+                    info="1.0 = normal, 0.5 = half speed, 2.0 = double",
+                )
+                pitch_val = gr.Number(
+                    label="Pitch (semitones)",
+                    value=0,
+                    minimum=-12,
+                    maximum=12,
+                    step=1,
+                    info="0 = normal, +2 = up 2 semitones, -3 = down 3",
+                )
             run_btn = gr.Button("RAWMASTER IT", variant="primary", size="lg")
 
         with gr.Column(scale=1):
@@ -447,7 +512,7 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
             stems_dl = gr.File(label="Download stems (ZIP)")
             midi_dl = gr.File(label="Download MIDI (ZIP)")
             info_box = gr.Textbox(
-                label="BPM + Key",
+                label="BPM + Key + Chords",
                 interactive=False,
                 placeholder="-",
             )
@@ -465,7 +530,7 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
 
     run_btn.click(
         fn=process,
-        inputs=[audio_input, reference_input, do_stems, n_stems, quality, do_midi, midi_all],
+        inputs=[audio_input, reference_input, do_stems, n_stems, quality, do_midi, midi_all, do_chords, speed_val, pitch_val],
         outputs=[status_box, remaster_audio, remaster_dl, stems_dl, midi_dl, info_box],
     )
 

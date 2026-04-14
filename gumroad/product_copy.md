@@ -28,7 +28,8 @@ RAWMASTER is a command-line tool that turns any audio file into clean stems, a r
 → Remaster pipeline: spectral gating + LUFS normalisation + hard limiter
 → Reference mastering: match your track's EQ, loudness + dynamics to any reference (--ref)
 → MIDI extraction from bass stem (polyphonic, via Basic-Pitch)
-→ BPM + musical key detection on every track
+→ BPM + musical key + chord progression detection on every track
+→ Speed and pitch control (time-stretch + pitch-shift)
 → Batch mode: process a whole folder in one command
 → 100% local — no uploads, no cloud, no ongoing costs
 
@@ -39,6 +40,9 @@ RAWMASTER is a command-line tool that turns any audio file into clean stems, a r
 ```
 rawmaster track.mp3                  → remaster only
 rawmaster track.mp3 --ref pro.wav    → reference mastering
+rawmaster track.mp3 --chords         → chord progression detection
+rawmaster track.mp3 --speed 0.8     → slow down to 80%
+rawmaster track.mp3 --pitch +2      → shift up 2 semitones
 rawmaster track.mp3 --stems          → remaster + 4 stems
 rawmaster track.mp3 --stems --midi   → + MIDI from bass
 rawmaster ./folder/ --stems          → batch mode
