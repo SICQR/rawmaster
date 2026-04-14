@@ -805,6 +805,72 @@ def change_speed_pitch(audio_path: Path, output_dir: Path,
 
 
 # ─────────────────────────────────────────────
+#  STEP 7 — EXPORT FORMAT CONVERSION
+# ─────────────────────────────────────────────
+
+FORMAT_MAP = {
+    "wav24": ("PCM_24", ".wav"),
+    "wav32": ("FLOAT", ".wav"),
+    "aiff": ("PCM_24", ".aiff"),
+    "mp3": (None, ".mp3"),  # handled separately via ffmpeg/pydub
+}
+
+
+def convert_output_format(output_dir: Path, fmt: str = "wav24",
+                          bpm_filename: bool = False, info: dict = None):
+    """Convert all output WAVs to the specified format."""
+    if fmt == "wav24" and not bpm_filename:
+        return  # default format, nothing to do
+
+    subtype, ext = FORMAT_MAP.get(fmt, ("PCM_24", ".wav"))
+    print(f"  📦 Converting outputs to {fmt.upper()}…")
+
+    # Find all WAV files in the output directory (remaster + stems)
+    wav_files = list(output_dir.rglob("*.wav"))
+
+    for wav_path in wav_files:
+        audio, sr = sf.read(str(wav_path), dtype="float32")
+
+        # Build new filename
+        stem_name = wav_path.stem
+        if bpm_filename and info:
+            bpm = info.get("bpm", 0)
+            key = info.get("key", "")
+            mode = info.get("mode", "")
+            stem_name = f"{stem_name}_{bpm}bpm_{key}{mode}"
+
+        new_name = f"{stem_name}{ext}"
+        new_path = wav_path.parent / new_name
+
+        if fmt == "mp3":
+            # Convert to MP3 via a temp WAV + ffmpeg
+            try:
+                import subprocess as _sp
+                temp_wav = wav_path.parent / f"_temp_{wav_path.name}"
+                sf.write(str(temp_wav), audio, sr, subtype="PCM_24")
+                mp3_path = wav_path.parent / new_name
+                _sp.run([
+                    "ffmpeg", "-y", "-i", str(temp_wav),
+                    "-codec:a", "libmp3lame", "-b:a", "320k",
+                    str(mp3_path)
+                ], check=True, capture_output=True)
+                temp_wav.unlink()
+                if wav_path.exists() and mp3_path.exists():
+                    wav_path.unlink()  # remove original WAV
+                print(f"  ✅ {new_name}")
+            except Exception as e:
+                print(f"  ⚠️  MP3 conversion failed for {wav_path.name}: {e}")
+        else:
+            # Write in the target format
+            sf.write(str(new_path), audio, sr, subtype=subtype)
+            if new_path != wav_path and new_path.exists():
+                wav_path.unlink()
+            print(f"  ✅ {new_name}")
+
+    print(f"  ✅ Export complete ({fmt.upper()})")
+
+
+# ─────────────────────────────────────────────
 #  PROCESS SINGLE FILE
 # ─────────────────────────────────────────────
 
@@ -821,6 +887,8 @@ def process_file(
     do_chords: bool = False,
     speed: float = None,
     pitch_semitones: float = None,
+    output_format: str = "wav24",
+    bpm_filename: bool = False,
 ):
     if not audio_path.exists():
         print(f"  ❌ File not found: {audio_path}")
@@ -867,6 +935,11 @@ def process_file(
     if do_midi or do_midi_all:
         extract_midi(stem_paths, output_root, midi_all=do_midi_all)
 
+    # Export format conversion
+    if output_format != "wav24" or bpm_filename:
+        convert_output_format(output_root, fmt=output_format,
+                              bpm_filename=bpm_filename, info=info)
+
     print(f"\n  🎉 Done → {output_root}\n")
 
 
@@ -901,6 +974,11 @@ def main():
                         help="Change playback speed (e.g. 0.8 = 80%%, 1.2 = 120%%)")
     parser.add_argument("--pitch", type=float, metavar="N",
                         help="Shift pitch in semitones (e.g. +2, -3)")
+    parser.add_argument("--format", choices=["wav24", "wav32", "aiff", "mp3"],
+                        default="wav24",
+                        help="Output format: wav24 (default), wav32 (float), aiff, mp3")
+    parser.add_argument("--bpm-filename", action="store_true",
+                        help="Append BPM and key to output filenames")
     parser.add_argument("--version", action="version", version=f"RAWMASTER {__version__}")
 
     args = parser.parse_args()
@@ -941,6 +1019,8 @@ def main():
     do_chords = args.chords
     speed = args.speed
     pitch_semitones = args.pitch
+    output_format = args.format
+    bpm_filename = args.bpm_filename
 
     # Batch mode (folder)
     if input_path.is_dir():
@@ -953,7 +1033,7 @@ def main():
             sys.exit(1)
         print(f"  📂 Batch mode: {len(audio_files)} file(s) found in {input_path.name}/\n")
         for f in audio_files:
-            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems, do_chords, speed, pitch_semitones)
+            process_file(f, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems, do_chords, speed, pitch_semitones, output_format, bpm_filename)
     else:
         process_file(input_path, do_stems, do_midi, do_midi_all, do_info, six_stem, reference_path, quality, max_stems, do_chords, speed, pitch_semitones)
 
