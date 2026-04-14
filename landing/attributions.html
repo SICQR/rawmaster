@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAWMASTER — Open-Source Attributions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #080808; --bg2: #111111; --border: #2a2a2a; --red: #e63012; --text: #f0ece4; --muted: #888880; --mono: 'Space Mono', monospace; --sans: 'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.8; padding: 80px 24px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-family: var(--mono); font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: var(--mono); font-size: 18px; margin-top: 40px; margin-bottom: 12px; color: var(--text); }
+    p { color: var(--muted); margin-bottom: 16px; font-size: 15px; }
+    a { color: var(--red); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .updated { font-size: 13px; color: var(--muted); font-family: var(--mono); margin-bottom: 40px; }
+    .back { display: inline-block; margin-bottom: 40px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+    .back:hover { color: var(--text); }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    th, td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--muted); font-weight: 400; }
+    td { color: var(--muted); }
+    td:first-child { color: var(--text); font-family: var(--mono); font-size: 13px; }
+    .license-badge { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 3px; background: var(--bg2); border: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+<a href="/" class="back">&larr; Back to RAWMASTER</a>
+
+<h1>Open-Source Attributions</h1>
+<p class="updated">Last updated: 14 April 2026</p>
+
+<p>RAWMASTER is built on the work of the open-source community. We gratefully acknowledge the following projects and their contributors.</p>
+
+<h2>AI Models</h2>
+
+<table>
+  <thead>
+    <tr><th>Project</th><th>Purpose</th><th>License</th><th>Authors</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://github.com/facebookresearch/demucs" target="_blank">Demucs</a></td>
+      <td>Stem separation (HTDemucs, HTDemucs fine-tuned)</td>
+      <td><span class="license-badge">MIT</span></td>
+      <td>Meta Research (Alexandre Defossez et al.)</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/nomadkaraoke/python-audio-separator" target="_blank">audio-separator</a></td>
+      <td>BS-Roformer vocal separation</td>
+      <td><span class="license-badge">MIT</span></td>
+      <td>Andrew Beveridge, UVR community</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/spotify/basic-pitch" target="_blank">Basic-Pitch</a></td>
+      <td>MIDI extraction (polyphonic transcription)</td>
+      <td><span class="license-badge">Apache 2.0</span></td>
+      <td>Spotify (Rachel Bittner et al.)</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/sergree/matchering" target="_blank">matchering</a></td>
+      <td>Reference mastering (spectral + loudness matching)</td>
+      <td><span class="license-badge">MIT</span></td>
+      <td>Sergree</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Audio Processing Libraries</h2>
+
+<table>
+  <thead>
+    <tr><th>Library</th><th>Purpose</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://github.com/spotify/pedalboard" target="_blank">pedalboard</a></td>
+      <td>DSP effects (EQ, gating, compression)</td>
+      <td><span class="license-badge">GPL-3.0</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/librosa/librosa" target="_blank">librosa</a></td>
+      <td>BPM detection, key detection, audio analysis</td>
+      <td><span class="license-badge">ISC</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/timsainb/noisereduce" target="_blank">noisereduce</a></td>
+      <td>Spectral noise gating</td>
+      <td><span class="license-badge">MIT</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/csteinmetz1/pyloudnorm" target="_blank">pyloudnorm</a></td>
+      <td>LUFS loudness normalisation</td>
+      <td><span class="license-badge">MIT</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/bastibe/python-soundfile" target="_blank">soundfile</a></td>
+      <td>Audio file I/O</td>
+      <td><span class="license-badge">BSD-3</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/scipy/scipy" target="_blank">scipy</a></td>
+      <td>Signal processing, filtering</td>
+      <td><span class="license-badge">BSD-3</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Infrastructure</h2>
+
+<table>
+  <thead>
+    <tr><th>Project</th><th>Purpose</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://github.com/gradio-app/gradio" target="_blank">Gradio</a></td>
+      <td>Desktop web UI</td>
+      <td><span class="license-badge">Apache 2.0</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/pallets/flask" target="_blank">Flask</a></td>
+      <td>Companion daemon HTTP server</td>
+      <td><span class="license-badge">BSD-3</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://pytorch.org" target="_blank">PyTorch</a></td>
+      <td>AI model inference runtime</td>
+      <td><span class="license-badge">BSD-3</span></td>
+    </tr>
+    <tr>
+      <td><a href="https://onnxruntime.ai" target="_blank">ONNX Runtime</a></td>
+      <td>MIDI model inference</td>
+      <td><span class="license-badge">MIT</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This list covers the primary dependencies. A complete list of all transitive dependencies and their licenses can be found by running <code>pip licenses</code> in the RAWMASTER virtual environment.</p>
+
+<h2>Contact</h2>
+<p>If you believe we have missed an attribution, please contact <a href="mailto:support@smashd.tools">support@smashd.tools</a>.</p>
+
+</div>
+</body>
+</html>

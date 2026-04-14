@@ -400,7 +400,7 @@ with gr.Blocks(theme=gr.themes.Base(), css=css, title="RAWMASTER") as demo:
                 sources=["upload"],
             )
             gr.Markdown(
-                "*Upload a pro master as reference. Your track's EQ, loudness, and dynamics will be matched to it — like LANDR, but local.*",
+                "*Upload a pro master as reference. Your track's EQ, loudness, and dynamics will be matched to it. Pro-grade mastering, 100% local.*",
                 elem_classes=["ref-help"],
             )
             do_stems = gr.Checkbox(label="Separate stems", value=True)

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAWMASTER — Privacy Policy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #080808; --bg2: #111111; --border: #2a2a2a; --red: #e63012; --text: #f0ece4; --muted: #888880; --mono: 'Space Mono', monospace; --sans: 'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.8; padding: 80px 24px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-family: var(--mono); font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: var(--mono); font-size: 18px; margin-top: 40px; margin-bottom: 12px; color: var(--text); }
+    h3 { font-family: var(--mono); font-size: 15px; margin-top: 24px; margin-bottom: 8px; color: var(--text); }
+    p, li { color: var(--muted); margin-bottom: 16px; font-size: 15px; }
+    ul { padding-left: 24px; }
+    li { margin-bottom: 8px; }
+    a { color: var(--red); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .updated { font-size: 13px; color: var(--muted); font-family: var(--mono); margin-bottom: 40px; }
+    .back { display: inline-block; margin-bottom: 40px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+    .back:hover { color: var(--text); }
+    .highlight { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin: 20px 0; }
+    .highlight p { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+<a href="/" class="back">&larr; Back to RAWMASTER</a>
+
+<h1>Privacy Policy</h1>
+<p class="updated">Last updated: 14 April 2026</p>
+
+<p>Smash Daddys ("we", "us", "our") operates RAWMASTER. This policy explains what data we collect and how we handle it.</p>
+
+<div class="highlight">
+  <p><strong>The short version:</strong> Your audio never leaves your machine. We don't collect, store, or process your music. The only data we handle is your license key for validation.</p>
+</div>
+
+<h2>1. Local Processing</h2>
+<p>RAWMASTER runs entirely on your computer. All audio processing — stem separation, mastering, MIDI extraction, and BPM/key detection — happens locally. No audio files are uploaded to our servers or any third-party service.</p>
+
+<h2>2. Data We Collect</h2>
+
+<h3>License Validation</h3>
+<p>When you enter your license key, RAWMASTER sends it to the Gumroad API for verification. This request contains:</p>
+<ul>
+  <li>Your license key</li>
+  <li>Our Gumroad product ID</li>
+</ul>
+<p>No audio data, filenames, usage statistics, or personal information is transmitted. Validated licenses are cached locally in <code>~/.rawmaster/license</code> for 30 days to enable offline use.</p>
+
+<h3>AI Model Downloads</h3>
+<p>On first use, RAWMASTER downloads AI model weights from public repositories (PyTorch Hub, HuggingFace). These downloads are standard HTTP requests and do not transmit any personal data.</p>
+
+<h2>3. HuggingFace Demo</h2>
+<p>The free demo at HuggingFace Spaces processes audio on HuggingFace's infrastructure. Audio uploaded to the demo is processed in memory and is not stored by us. HuggingFace's own privacy policy applies to their infrastructure. The demo is limited to 90-second clips.</p>
+
+<h2>4. Browser Extension</h2>
+<p>The RAWMASTER browser extension:</p>
+<ul>
+  <li>Communicates only with the local Companion daemon at <code>127.0.0.1:5432</code></li>
+  <li>Does not transmit any data to external servers</li>
+  <li>Stores user preferences (stem count, MIDI toggle) locally using Chrome's <code>storage.local</code> API</li>
+  <li>Does not collect browsing history, cookies, or personal information</li>
+  <li>Does not track usage or analytics</li>
+</ul>
+
+<h2>5. Landing Page</h2>
+<p>Our website at rawmaster.smashd.tools:</p>
+<ul>
+  <li>Does not use cookies</li>
+  <li>Does not use analytics or tracking scripts</li>
+  <li>Does not collect personal information</li>
+  <li>Uses Google Fonts, which may set standard HTTP caching headers</li>
+</ul>
+
+<h2>6. Third-Party Services</h2>
+<p>RAWMASTER integrates with the following third-party services:</p>
+<ul>
+  <li><strong>Gumroad</strong> — payment processing and license validation. Gumroad's privacy policy applies to purchase transactions.</li>
+  <li><strong>HuggingFace</strong> — hosts the free demo. HuggingFace's privacy policy applies.</li>
+  <li><strong>Google Fonts</strong> — font delivery on the landing page.</li>
+</ul>
+
+<h2>7. Data Retention</h2>
+<p>We do not store any user data on our servers. The only local file created by RAWMASTER is the license cache at <code>~/.rawmaster/license</code>, which contains your license key and a timestamp. You can delete this file at any time.</p>
+
+<h2>8. Children's Privacy</h2>
+<p>RAWMASTER is not directed at children under 13. We do not knowingly collect data from children.</p>
+
+<h2>9. Your Rights</h2>
+<p>Since we do not collect personal data, there is nothing to request access to, correct, or delete. If you have questions about your Gumroad purchase data, contact Gumroad directly.</p>
+
+<h2>10. Changes to This Policy</h2>
+<p>We may update this policy from time to time. Changes will be posted on this page with an updated date.</p>
+
+<h2>11. Contact</h2>
+<p>For privacy questions, contact us at <a href="mailto:support@smashd.tools">support@smashd.tools</a>.</p>
+
+</div>
+</body>
+</html>

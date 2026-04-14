@@ -3,71 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — RAWMASTER for Suno</title>
+  <title>Privacy Policy — RAWMASTER Browser Extension</title>
   <style>
-    body {
-      font-family: 'Courier New', monospace;
-      max-width: 680px;
-      margin: 60px auto;
-      padding: 0 24px;
-      color: #1a1a1a;
-      line-height: 1.8;
-      font-size: 14px;
-    }
-    h1 { font-size: 22px; margin-bottom: 8px; }
-    h2 { font-size: 15px; margin-top: 32px; margin-bottom: 8px; color: #333; }
-    p  { margin-bottom: 14px; }
-    .updated { color: #888; font-size: 12px; margin-bottom: 32px; }
-    a  { color: #e63012; }
+    body { font-family: -apple-system, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; line-height: 1.7; color: #333; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    h2 { font-size: 16px; margin-top: 28px; }
+    p { margin-bottom: 14px; font-size: 15px; }
+    .updated { font-size: 13px; color: #888; margin-bottom: 24px; }
+    a { color: #e63012; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
   </style>
 </head>
 <body>
-  <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: April 2026</p>
 
-  <h2>RAWMASTER for Suno (Chrome Extension)</h2>
+<h1>Privacy Policy</h1>
+<p class="updated">RAWMASTER Browser Extension — Last updated: 14 April 2026</p>
 
-  <p><strong>RAWMASTER for Suno does not collect, transmit, or store any personal data.</strong></p>
+<p><strong>The RAWMASTER browser extension does not collect, transmit, or store any personal data.</strong></p>
 
-  <h2>What this extension does</h2>
-  <p>
-    RAWMASTER for Suno injects a button into suno.com track cards. When clicked, the extension
-    sends the audio URL of the selected track to the RAWMASTER Companion app running locally
-    on your machine at <code>http://127.0.0.1:5432</code>. The Companion processes the audio
-    entirely on your device and returns a ZIP file, which is downloaded directly to your computer.
-  </p>
+<h2>What the extension does</h2>
+<p>RAWMASTER injects a processing button into supported AI music platform pages. When clicked, the extension sends the audio URL to a local Companion application running on your own machine at <code>127.0.0.1:5432</code>. All audio processing happens locally. Nothing is sent to external servers.</p>
 
-  <h2>Data we do NOT collect</h2>
-  <p>
-    This extension does not collect, log, transmit, or share:<br>
-    — Your browsing history<br>
-    — Your Suno account information<br>
-    — Your audio files<br>
-    — Any personally identifiable information
-  </p>
+<h2>Data the extension accesses</h2>
+<p>The extension reads audio URLs from the web page you are viewing. This data is sent only to the local Companion daemon on your machine. It is not transmitted to any external server, cloud service, or third party.</p>
 
-  <h2>Local storage</h2>
-  <p>
-    The extension stores only your processing preferences (stem count, MIDI toggle) in Chrome's
-    local storage on your device. This data never leaves your machine.
-  </p>
+<h2>Data the extension stores</h2>
+<p>User preferences (stem count, MIDI toggle, quality setting) are stored locally using Chrome's <code>storage.local</code> API. This data never leaves your browser.</p>
 
-  <h2>Network requests</h2>
-  <p>
-    The only network requests made by this extension are:<br>
-    1. To <code>http://127.0.0.1:5432</code> (your local machine) — to communicate with the Companion daemon<br>
-    2. To <code>https://*.suno.ai</code> — to resolve audio file URLs from Suno's CDN<br><br>
-    No requests are made to any third-party servers controlled by Smash Daddys or Raw Convict Records.
-  </p>
+<h2>What we do NOT collect</h2>
+<ul>
+  <li>Browsing history</li>
+  <li>Account information from any platform</li>
+  <li>Audio content or metadata</li>
+  <li>Usage analytics or telemetry</li>
+  <li>Cookies or tracking data</li>
+  <li>Personal information of any kind</li>
+</ul>
 
-  <h2>Contact</h2>
-  <p>
-    Questions? Contact <a href="mailto:phil@hotmessldn.com">phil@hotmessldn.com</a>
-  </p>
+<h2>Network requests</h2>
+<p>The extension makes requests only to <code>127.0.0.1:5432</code> (your local RAWMASTER Companion daemon). No other network requests are made.</p>
 
-  <p style="margin-top:48px;color:#999;font-size:12px">
-    &copy; 2026 Smash Daddys / Raw Convict Records &mdash;
-    <a href="https://rawmaster.smashd.tools">rawmaster.smashd.tools</a>
-  </p>
+<h2>Third-party platforms</h2>
+<p>The extension processes your own generated content from supported platforms. Use of the extension must comply with the terms of service of any platform you use it with. We are not affiliated with or endorsed by any third-party platform.</p>
+
+<h2>Contact</h2>
+<p>For privacy questions: <a href="mailto:support@smashd.tools">support@smashd.tools</a></p>
+<p>Full privacy policy: <a href="https://rawmaster.smashd.tools/privacy.html">rawmaster.smashd.tools/privacy</a></p>
+
 </body>
 </html>
