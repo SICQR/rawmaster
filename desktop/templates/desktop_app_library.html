@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RAWMASTER | SESSION_LIBRARY</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#5d403a",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container": "#201f1f",
+                        "tertiary-container": "#93908a",
+                        "inverse-primary": "#bb1a00",
+                        "primary-fixed": "#ffdad3",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#e6e2da",
+                        "primary": "#ffb4a5",
+                        "outline": "#ad8881",
+                        "on-secondary-container": "#b6b5b4",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-secondary": "#303030",
+                        "background": "#131313",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-high": "#2a2a2a",
+                        "on-primary-fixed-variant": "#8f1200",
+                        "surface-variant": "#353534",
+                        "tertiary": "#cac6bf",
+                        "on-tertiary-fixed": "#1c1c17",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface-bright": "#3a3939",
+                        "on-primary-container": "#590700",
+                        "on-surface-variant": "#e6bdb5",
+                        "on-tertiary": "#31302b",
+                        "tertiary-fixed-dim": "#cac6bf",
+                        "on-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "secondary": "#c8c6c5",
+                        "primary-container": "#ff5638",
+                        "on-primary-fixed": "#3f0400",
+                        "on-primary": "#650900",
+                        "on-tertiary-fixed-variant": "#484741",
+                        "on-secondary-fixed-variant": "#474746",
+                        "on-background": "#e5e2e1",
+                        "on-tertiary-container": "#2b2a25",
+                        "surface-dim": "#131313",
+                        "inverse-on-surface": "#313030",
+                        "secondary-container": "#474746",
+                        "surface-container-highest": "#353534",
+                        "surface": "#131313",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#ffb4a5",
+                        "surface-tint": "#ffb4a5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"],
+                        "mono": ["Space Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .waveform-stepped {
+            background: linear-gradient(90deg, #ffb4a5 2px, transparent 2px);
+            background-size: 4px 100%;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; }
+        ::-webkit-scrollbar-thumb:hover { background: #ffb4a5; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-6 h-16 bg-[#131313] fixed top-0 z-50">
+<div class="font-['Space_Grotesk'] text-xl font-bold tracking-widest text-[#ffb4a5]">RAWMASTER</div>
+<nav class="hidden md:flex items-center space-x-8">
+<a class="font-['Space_Grotesk'] uppercase tracking-[0.15em] text-sm text-[#e6bdb5] font-medium hover:bg-[#2a2a2a] transition-colors duration-200 px-2 py-1" href="#">SESSIONS</a>
+<a class="font-['Space_Grotesk'] uppercase tracking-[0.15em] text-sm text-[#ffb4a5] border-b-2 border-[#ffb4a5] pb-1" href="#">LIBRARY</a>
+<a class="font-['Space_Grotesk'] uppercase tracking-[0.15em] text-sm text-[#e6bdb5] font-medium hover:bg-[#2a2a2a] transition-colors duration-200 px-2 py-1" href="#">PLUGINS</a>
+<a class="font-['Space_Grotesk'] uppercase tracking-[0.15em] text-sm text-[#e6bdb5] font-medium hover:bg-[#2a2a2a] transition-colors duration-200 px-2 py-1" href="#">EXPORT</a>
+</nav>
+<div class="flex items-center space-x-4">
+<button class="material-symbols-outlined text-[#ffb4a5] hover:bg-[#2a2a2a] p-2 transition-transform scale-95 active:scale-90">settings</button>
+<button class="material-symbols-outlined text-[#ffb4a5] hover:bg-[#2a2a2a] p-2 transition-transform scale-95 active:scale-90">account_circle</button>
+</div>
+</header>
+<div class="flex h-screen pt-16">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full py-8 px-4 bg-[#0e0e0e] w-64 flex-shrink-0">
+<div class="mb-8 px-2">
+<div class="text-[#ffb4a5] font-bold font-headline tracking-widest text-lg">MASTER_UNIT</div>
+<div class="font-['Space_Grotesk'] uppercase tracking-widest text-[10px] text-on-surface-variant opacity-60">v2.4.0_STABLE</div>
+</div>
+<nav class="flex-grow space-y-2">
+<button class="w-full flex items-center space-x-3 px-3 py-2 text-[#e6bdb5] opacity-70 hover:bg-[#201f1f] hover:opacity-100 transition-all group">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs">SYSTEM_LOG</span>
+</button>
+<button class="w-full flex items-center space-x-3 px-3 py-2 text-[#ffb4a5] bg-[#2a2a2a] rounded-sm border-l-4 border-[#ffb4a5]">
+<span class="material-symbols-outlined text-sm">equalizer</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs">ANALYTICS</span>
+</button>
+</nav>
+<div class="mt-auto space-y-2 border-t border-surface-container pt-4">
+<button class="w-full flex items-center space-x-3 px-3 py-2 text-[#e6bdb5] opacity-70 hover:bg-[#201f1f] hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs">SETTINGS</span>
+</button>
+<button class="w-full flex items-center space-x-3 px-3 py-2 text-[#e6bdb5] opacity-70 hover:bg-[#201f1f] hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-sm">help</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs">HELP</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col bg-surface overflow-hidden">
+<!-- Header Section -->
+<div class="p-6 bg-surface-container-lowest flex flex-col gap-6">
+<div class="flex justify-between items-end">
+<div>
+<h1 class="font-mono font-bold text-2xl tracking-tighter text-on-surface">SESSION_LIBRARY</h1>
+<p class="font-mono text-[10px] text-primary mt-1 opacity-80">ROOT://VOL_01/PROJECTS/AUDIO_ASSETS</p>
+</div>
+<div class="flex items-center space-x-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-lowest border-none focus:ring-1 focus:ring-primary/40 font-mono text-xs pl-10 pr-4 py-2 w-64 text-on-surface placeholder:text-on-surface-variant/40" placeholder="SEARCH_FILES..." type="text"/>
+</div>
+<div class="flex items-center bg-surface-container p-1 rounded-sm">
+<span class="font-mono text-[10px] px-2 text-on-surface-variant uppercase">SORT_BY</span>
+<select class="bg-transparent border-none focus:ring-0 font-mono text-xs text-primary py-0 pr-8 cursor-pointer">
+<option>DATE</option>
+<option>NAME</option>
+<option>BPM</option>
+<option>KEY</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Filter Bar -->
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<button class="px-3 py-1 bg-primary text-on-primary font-mono text-[10px] tracking-wider flex items-center space-x-1 hover:brightness-110 transition-all">
+<span>HAS_STEMS</span>
+<span class="material-symbols-outlined text-[10px]">check</span>
+</button>
+<button class="px-3 py-1 bg-surface-container-high text-on-surface-variant font-mono text-[10px] tracking-wider hover:bg-surface-variant transition-all">HAS_MIDI</button>
+<button class="px-3 py-1 bg-surface-container-high text-on-surface-variant font-mono text-[10px] tracking-wider hover:bg-surface-variant transition-all">HAS_CHORDS</button>
+</div>
+<div class="flex items-center bg-surface-container-low px-3 py-1 space-x-3">
+<span class="font-mono text-[10px] text-on-surface-variant">KEY_FILTER</span>
+<select class="bg-transparent border-none focus:ring-0 font-mono text-xs text-on-surface p-0 cursor-pointer">
+<option>ALL_KEYS</option>
+<option>C MINOR</option>
+<option>F# MINOR</option>
+<option>A MAJOR</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Track List Table -->
+<div class="flex-grow overflow-y-auto px-6 py-4">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-surface z-10">
+<tr class="text-left font-mono text-[10px] text-on-surface-variant/60 uppercase tracking-widest border-b border-surface-container">
+<th class="pb-3 font-normal">Waveform</th>
+<th class="pb-3 font-normal">Track_Identity</th>
+<th class="pb-3 font-normal">Metadata</th>
+<th class="pb-3 font-normal">Outputs</th>
+<th class="pb-3 font-normal text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-4 w-32">
+<div class="h-8 w-24 bg-surface-container relative overflow-hidden">
+<div class="absolute inset-0 waveform-stepped opacity-40"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"></div>
+</div>
+</td>
+<td class="py-4">
+<div class="font-mono text-xs text-on-surface group-hover:text-primary transition-colors">heavy_industrial_mix_v4.wav</div>
+<div class="font-mono text-[10px] text-on-surface-variant/50">2023.10.27</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-4 font-mono text-[10px] tabular-nums">
+<span class="text-on-surface">125.0 <span class="opacity-40">BPM</span></span>
+<span class="text-primary">F# MINOR</span>
+</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-1">
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">STEMS</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-mono">MIDI</span>
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">CHORDS</span>
+</div>
+</td>
+<td class="py-4 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">play_arrow</button>
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">folder</button>
+<button class="material-symbols-outlined text-sm hover:text-error transition-colors">delete_sweep</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-4 w-32">
+<div class="h-8 w-24 bg-surface-container relative overflow-hidden">
+<div class="absolute inset-0 waveform-stepped opacity-40" style="height: 60%; top: 20%;"></div>
+</div>
+</td>
+<td class="py-4">
+<div class="font-mono text-xs text-on-surface group-hover:text-primary transition-colors">ambient_texture_pad_01.aif</div>
+<div class="font-mono text-[10px] text-on-surface-variant/50">2023.10.25</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-4 font-mono text-[10px] tabular-nums">
+<span class="text-on-surface">094.0 <span class="opacity-40">BPM</span></span>
+<span class="text-primary">C MINOR</span>
+</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-1">
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-mono">STEMS</span>
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">MIDI</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-mono">CHORDS</span>
+</div>
+</td>
+<td class="py-4 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">play_arrow</button>
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">folder</button>
+<button class="material-symbols-outlined text-sm hover:text-error transition-colors">delete_sweep</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-4 w-32">
+<div class="h-8 w-24 bg-surface-container relative overflow-hidden">
+<div class="absolute inset-0 waveform-stepped opacity-40" style="height: 90%; top: 5%;"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"></div>
+</div>
+</td>
+<td class="py-4">
+<div class="font-mono text-xs text-on-surface group-hover:text-primary transition-colors">sub_bass_pulse_syncopated.wav</div>
+<div class="font-mono text-[10px] text-on-surface-variant/50">2023.10.22</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-4 font-mono text-[10px] tabular-nums">
+<span class="text-on-surface">128.0 <span class="opacity-40">BPM</span></span>
+<span class="text-primary">E PHRYGIAN</span>
+</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-1">
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">STEMS</span>
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">MIDI</span>
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">CHORDS</span>
+</div>
+</td>
+<td class="py-4 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">play_arrow</button>
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">folder</button>
+<button class="material-symbols-outlined text-sm hover:text-error transition-colors">delete_sweep</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-surface-container-low transition-colors border-none">
+<td class="py-4 w-32">
+<div class="h-8 w-24 bg-surface-container relative overflow-hidden">
+<div class="absolute inset-0 waveform-stepped opacity-40" style="height: 40%; top: 30%;"></div>
+</div>
+</td>
+<td class="py-4">
+<div class="font-mono text-xs text-on-surface group-hover:text-primary transition-colors">glitch_perc_loop_render.wav</div>
+<div class="font-mono text-[10px] text-on-surface-variant/50">2023.10.20</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-4 font-mono text-[10px] tabular-nums">
+<span class="text-on-surface">132.0 <span class="opacity-40">BPM</span></span>
+<span class="text-primary">N/A</span>
+</div>
+</td>
+<td class="py-4">
+<div class="flex space-x-1">
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary-container text-[8px] font-mono border border-primary-container/30">STEMS</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-mono">MIDI</span>
+<span class="px-1.5 py-0.5 bg-surface-container-highest text-on-surface-variant text-[8px] font-mono">CHORDS</span>
+</div>
+</td>
+<td class="py-4 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">play_arrow</button>
+<button class="material-symbols-outlined text-sm hover:text-primary transition-colors">folder</button>
+<button class="material-symbols-outlined text-sm hover:text-error transition-colors">delete_sweep</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer / Status Bar -->
+<footer class="h-8 bg-surface-container-lowest border-t border-surface-container px-6 flex items-center justify-between font-mono text-[9px] tracking-widest text-on-surface-variant">
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2">
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+<span>INDEX_SYNCED: 42_TRACKS</span>
+</div>
+<div class="w-px h-3 bg-surface-container-highest"></div>
+<span>LOC: /VOL_01/RAW_SAMPLES</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="w-48 h-1.5 bg-surface-container relative overflow-hidden">
+<div class="absolute inset-y-0 left-0 bg-primary/40 w-3/4"></div>
+</div>
+<span>STORAGE_USED: 12.4_GB</span>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

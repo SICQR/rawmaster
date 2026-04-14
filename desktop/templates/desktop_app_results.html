@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RAWMASTER // RAWMASTER_RESULTS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#93908a",
+                        "background": "#131313",
+                        "secondary-container": "#474746",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "surface": "#131313",
+                        "tertiary-fixed": "#e6e2da",
+                        "on-primary-fixed": "#3f0400",
+                        "surface-bright": "#3a3939",
+                        "primary-fixed": "#ffdad3",
+                        "on-secondary-container": "#b6b5b4",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#8f1200",
+                        "surface-dim": "#131313",
+                        "on-primary-container": "#590700",
+                        "tertiary": "#cac6bf",
+                        "on-tertiary-fixed-variant": "#484741",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#31302b",
+                        "outline": "#ad8881",
+                        "secondary": "#c8c6c5",
+                        "surface-tint": "#ffb4a5",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-tertiary-container": "#2b2a25",
+                        "surface-container-highest": "#353534",
+                        "primary-fixed-dim": "#ffb4a5",
+                        "inverse-surface": "#e5e2e1",
+                        "inverse-primary": "#bb1a00",
+                        "inverse-on-surface": "#313030",
+                        "on-error": "#690005",
+                        "primary": "#ffb4a5",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-container": "#ff5638",
+                        "on-background": "#e5e2e1",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary": "#303030",
+                        "outline-variant": "#5d403a",
+                        "surface-container": "#201f1f",
+                        "surface-variant": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "on-primary": "#650900",
+                        "tertiary-fixed-dim": "#cac6bf",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-tertiary-fixed": "#1c1c17",
+                        "on-surface-variant": "#e6bdb5",
+                        "signal-red": "#e63012",
+                        "terminal-text": "#f0ece4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"],
+                        "mono": ["Space Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .waveform-bar {
+            width: 2px;
+            background: currentColor;
+            margin-right: 1px;
+        }
+        .bg-terminal-gradient {
+            background: linear-gradient(135deg, #131313 0%, #0e0e0e 100%);
+        }
+        .glow-signal {
+            box-shadow: 0 0 15px rgba(230, 48, 18, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- Top Navigation Bar -->
+<nav class="flex justify-between items-center w-full px-6 h-14 bg-[#131313] border-none fixed top-0 z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-[#ffb4a5] font-headline">RAWMASTER</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="uppercase tracking-[0.15em] font-headline text-sm text-[#ffb4a5] border-b border-[#ffb4a5] pb-1" href="#">SESSIONS</a>
+<a class="uppercase tracking-[0.15em] font-headline text-sm text-[#e6bdb5] opacity-60 hover:bg-[#2a2a2a] hover:text-[#ffb4a5] transition-colors" href="#">LIBRARY</a>
+<a class="uppercase tracking-[0.15em] font-headline text-sm text-[#e6bdb5] opacity-60 hover:bg-[#2a2a2a] hover:text-[#ffb4a5] transition-colors" href="#">PLUGINS</a>
+<a class="uppercase tracking-[0.15em] font-headline text-sm text-[#e6bdb5] opacity-60 hover:bg-[#2a2a2a] hover:text-[#ffb4a5] transition-colors" href="#">EXPORT</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary-container text-on-primary px-4 py-1 text-xs font-headline font-bold uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all">UPGRADE_PRO</button>
+<span class="material-symbols-outlined text-[#e6bdb5] cursor-pointer hover:text-[#ffb4a5]">settings</span>
+<span class="material-symbols-outlined text-[#e6bdb5] cursor-pointer hover:text-[#ffb4a5]">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30">
+<img alt="User profile" data-alt="Stylized avatar of a music producer with headphones in a minimalist vector style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY9DvAnmFxM9sFgobiRYEcDJAn6DV5FhaNWMRkbAguwIkLj647yjRRom2uOvJDtK8Bv3kApHoQr-qEfmxqB9ir83-6SOwpFexKxVBDlidpOpKN2iOMw2lx_aEt5PVtHyngCVTl9Zj3G6wMWaAFCoWA94_QQr5vUjveZJWquEP2orkiunC6c7m8PijxD4lC4QX8GdUzWUnxeMdfgisBjp2FHnm2wLU7TZ1fHWKUk4i1DyxLTqFw3VxSAF_Z8rHTt3JaDbFwCZvCvNVL"/>
+</div>
+</div>
+</nav>
+<div class="flex pt-14 h-screen overflow-hidden">
+<!-- Side Navigation Bar -->
+<aside class="hidden md:flex flex-col h-full w-64 py-6 px-2 bg-[#0e0e0e] border-none shrink-0">
+<div class="px-4 mb-8">
+<h3 class="uppercase tracking-widest font-headline text-[10px] text-[#ffb4a5]">SIGNAL_CHAIN</h3>
+<p class="font-mono text-[10px] text-[#e6bdb5] opacity-50">v2.4_STABLE</p>
+</div>
+<div class="flex flex-col gap-1 grow">
+<button class="flex items-center gap-3 px-4 py-3 bg-[#201f1f] text-[#ffb4a5] border-l-2 border-[#ff5638] transition-transform active:translate-x-1">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+<span class="uppercase font-headline text-xs tracking-widest">PRE_AMP</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-[#e6bdb5] opacity-50 hover:bg-[#2a2a2a] hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-sm">compress</span>
+<span class="uppercase font-headline text-xs tracking-widest">COMPRESSION</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-[#e6bdb5] opacity-50 hover:bg-[#2a2a2a] hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-sm">equalizer</span>
+<span class="uppercase font-headline text-xs tracking-widest">EQ_SURGERY</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-[#e6bdb5] opacity-50 hover:bg-[#2a2a2a] hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-sm">waves</span>
+<span class="uppercase font-headline text-xs tracking-widest">HARMONICS</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-[#e6bdb5] opacity-50 hover:bg-[#2a2a2a] hover:opacity-100 transition-all">
+<span class="material-symbols-outlined text-sm">graphic_eq</span>
+<span class="uppercase font-headline text-xs tracking-widest">LIMITER</span>
+</button>
+<button class="mt-6 mx-2 border border-outline-variant/30 py-2 flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-xs">add</span>
+<span class="font-headline text-[10px] tracking-widest uppercase">ADD_MODULE</span>
+</button>
+</div>
+<div class="flex flex-col gap-1 border-t border-outline-variant/10 pt-4">
+<button class="flex items-center gap-3 px-4 py-2 text-[#e6bdb5] opacity-50 hover:opacity-100">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span class="uppercase font-headline text-xs tracking-widest">SYSTEM_LOG</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-2 text-[#e6bdb5] opacity-50 hover:opacity-100">
+<span class="material-symbols-outlined text-sm">query_stats</span>
+<span class="uppercase font-headline text-xs tracking-widest">ANALYTICS</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-surface-container-lowest p-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto">
+<!-- Left Column: Input Configuration (Completed State) -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<section class="bg-surface-container p-6 border-l-2 border-primary/20">
+<header class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline uppercase tracking-[0.2em] text-[10px] text-primary/70">INPUT_SOURCE</h2>
+<p class="font-mono text-sm text-terminal-text">heavy_industrial_mix_v4.wav</p>
+</div>
+<span class="material-symbols-outlined text-primary/50 text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</header>
+<!-- Uploaded Waveform View -->
+<div class="h-24 w-full bg-surface-container-lowest flex items-center justify-center relative group overflow-hidden mb-6">
+<div class="absolute inset-0 flex items-center justify-center px-4 gap-[2px] opacity-40">
+<!-- Mock Waveform Bars -->
+<div class="waveform-bar h-8"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-18"></div><div class="waveform-bar h-20"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-18"></div><div class="waveform-bar h-20"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-12"></div><div class="waveform-bar h-8"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-10"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-18"></div><div class="waveform-bar h-20"></div><div class="waveform-bar h-14"></div><div class="waveform-bar h-16"></div><div class="waveform-bar h-12"></div>
+</div>
+</div>
+<!-- Settings Used -->
+<div class="space-y-4">
+<h3 class="font-headline uppercase tracking-widest text-[9px] text-on-surface-variant/60">CONFIGURATION_LOG</h3>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-surface-container-low p-3">
+<p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">Stem Separation</p>
+<p class="font-mono text-xs text-primary">6-STEMS</p>
+</div>
+<div class="bg-surface-container-low p-3">
+<p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">Engine Quality</p>
+<p class="font-mono text-xs text-primary uppercase">Best Quality</p>
+</div>
+<div class="bg-surface-container-low p-3">
+<p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">MIDI Extraction</p>
+<p class="font-mono text-xs text-primary uppercase">Enabled</p>
+</div>
+<div class="bg-surface-container-low p-3">
+<p class="font-headline text-[9px] text-on-surface-variant/50 uppercase">Normalisation</p>
+<p class="font-mono text-xs text-primary uppercase">-0.1 dB</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Laboratory Equipment Aesthetic Section -->
+<div class="bg-surface-container-lowest p-6 border border-outline-variant/10">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-1 bg-signal-red glow-signal"></div>
+<span class="font-mono text-[10px] uppercase tracking-tighter text-signal-red">Processor Active</span>
+</div>
+<div class="space-y-2 opacity-50">
+<div class="flex justify-between font-mono text-[9px]">
+<span>L_PEAK</span>
+<span>-2.4 dB</span>
+</div>
+<div class="w-full bg-surface-container h-1">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<div class="flex justify-between font-mono text-[9px]">
+<span>R_PEAK</span>
+<span>-2.6 dB</span>
+</div>
+<div class="w-full bg-surface-container h-1">
+<div class="bg-primary h-full w-[82%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Output Section -->
+<div class="lg:col-span-8 flex flex-col gap-6">
+<!-- 1. Status Panel -->
+<div class="bg-surface-container-high p-4 flex items-center justify-between border-b-2 border-[#4ade80]">
+<div class="flex items-center gap-3">
+<span class="flex h-3 w-3 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ade80] opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-[#4ade80]"></span>
+</span>
+<span class="font-mono text-sm tracking-widest text-[#4ade80]">DONE: MASTERING_PROTOCOL_COMPLETE</span>
+</div>
+<span class="font-mono text-xs text-on-surface-variant/60">TS: 2023.10.27_14:22:01</span>
+</div>
+<!-- 2. Audio Waveform Player -->
+<section class="bg-surface-container-high p-8 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20"></div>
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="font-headline uppercase tracking-[0.15em] text-lg text-terminal-text">REM_heavy_industrial_mix_FINAL.wav</h2>
+<p class="font-mono text-xs text-primary/60">AI_ASSISTED_MASTERING // V12_STABLE_MODEL</p>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-mono text-xl text-primary">02:44 <span class="text-on-surface-variant/30">/ 04:12</span></span>
+</div>
+</div>
+<!-- Main Waveform -->
+<div class="relative h-48 w-full bg-surface-container-lowest/50 mb-8 px-4 flex items-center gap-[3px]">
+<!-- Visualizing audio with dense steps as requested -->
+<div class="flex-1 flex items-center h-full gap-[2px]">
+<!-- Segment 1 -->
+<div class="w-1 bg-primary/20 h-12"></div><div class="w-1 bg-primary/20 h-24"></div><div class="w-1 bg-primary/20 h-16"></div><div class="w-1 bg-primary/20 h-32"></div><div class="w-1 bg-primary h-40"></div><div class="w-1 bg-primary h-36"></div><div class="w-1 bg-primary h-44"></div><div class="w-1 bg-primary h-28"></div><div class="w-1 bg-primary h-48"></div><div class="w-1 bg-primary h-42"></div><div class="w-1 bg-primary h-38"></div><div class="w-1 bg-primary h-44"></div><div class="w-1 bg-primary h-46"></div><div class="w-1 bg-primary h-34"></div><div class="w-1 bg-primary h-40"></div><div class="w-1 bg-primary/40 h-32"></div><div class="w-1 bg-primary/40 h-24"></div><div class="w-1 bg-primary/40 h-28"></div><div class="w-1 bg-primary/40 h-12"></div><div class="w-1 bg-primary/40 h-18"></div><div class="w-1 bg-primary/40 h-22"></div><div class="w-1 bg-primary/40 h-14"></div><div class="w-1 bg-primary/40 h-10"></div><div class="w-1 bg-primary/40 h-16"></div><div class="w-1 bg-primary/40 h-8"></div><div class="w-1 bg-primary/40 h-14"></div>
+</div>
+<!-- Scrubber Line -->
+<div class="absolute left-[40%] top-0 bottom-0 w-[2px] bg-signal-red z-10 glow-signal">
+<div class="absolute -top-1 -left-1 w-3 h-3 bg-signal-red rounded-none"></div>
+</div>
+</div>
+<!-- Player Controls -->
+<div class="flex justify-center items-center gap-12">
+<button class="material-symbols-outlined text-on-surface-variant/50 hover:text-primary transition-colors text-3xl">replay_10</button>
+<button class="w-16 h-16 flex items-center justify-center bg-primary text-on-primary hover:bg-primary-container transition-all active:scale-95 shadow-xl">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="material-symbols-outlined text-on-surface-variant/50 hover:text-primary transition-colors text-3xl">forward_10</button>
+</div>
+</section>
+<!-- 4. Info Bar (Extracted Metadata) -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-px bg-outline-variant/20">
+<div class="bg-surface-container p-4">
+<p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Detected BPM</p>
+<p class="font-mono text-xl text-terminal-text">125.0</p>
+</div>
+<div class="bg-surface-container p-4">
+<p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Harmonic Key</p>
+<p class="font-mono text-xl text-signal-red">F# Minor</p>
+</div>
+<div class="bg-surface-container p-4">
+<p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Confidence Score</p>
+<p class="font-mono text-xl text-terminal-text">99.4%</p>
+</div>
+<div class="bg-surface-container p-4">
+<p class="font-headline uppercase tracking-widest text-[10px] text-on-surface-variant/50 mb-1">Chord Chain</p>
+<p class="font-mono text-sm text-primary tracking-tighter">C → F → G → Am</p>
+</div>
+</section>
+<!-- 3. Download Section -->
+<div class="bg-surface-container-low p-8 border border-outline-variant/10">
+<div class="flex items-center gap-4 mb-6">
+<span class="material-symbols-outlined text-primary">download</span>
+<h3 class="font-headline uppercase tracking-widest text-sm text-terminal-text">ASSET_EXPORT_BUNDLES</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<button class="flex flex-col items-start p-4 bg-primary text-on-primary hover:brightness-110 transition-all group">
+<span class="font-headline font-bold text-xs uppercase mb-2">Mastered Track</span>
+<span class="font-mono text-[10px] mb-4 opacity-80">RAW_PCM // 24-BIT // 48KHZ</span>
+<div class="w-full flex justify-between items-center">
+<span class="font-mono text-xs font-bold">WAV (75.4 MB)</span>
+<span class="material-symbols-outlined group-hover:translate-y-1 transition-transform">download_for_offline</span>
+</div>
+</button>
+<button class="flex flex-col items-start p-4 bg-surface-container-high border border-outline-variant/30 hover:border-primary/50 transition-all group">
+<span class="font-headline font-bold text-xs uppercase mb-2 text-on-surface-variant">Separated Audio</span>
+<span class="font-mono text-[10px] mb-4 text-on-surface-variant/50">6_STEM_ARCHIVE</span>
+<div class="w-full flex justify-between items-center">
+<span class="font-mono text-xs text-terminal-text">Stems (ZIP)</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-y-1 transition-transform">folder_zip</span>
+</div>
+</button>
+<button class="flex flex-col items-start p-4 bg-surface-container-high border border-outline-variant/30 hover:border-primary/50 transition-all group">
+<span class="font-headline font-bold text-xs uppercase mb-2 text-on-surface-variant">Extracted Theory</span>
+<span class="font-mono text-[10px] mb-4 text-on-surface-variant/50">MIDI_AND_METADATA</span>
+<div class="w-full flex justify-between items-center">
+<span class="font-mono text-xs text-terminal-text">MIDI (ZIP)</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-y-1 transition-transform">data_object</span>
+</div>
+</button>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant/10 flex justify-between items-center">
+<div class="flex gap-4">
+<button class="text-[10px] font-headline uppercase tracking-widest text-on-surface-variant/50 hover:text-primary transition-colors">Generate Share Link</button>
+<button class="text-[10px] font-headline uppercase tracking-widest text-on-surface-variant/50 hover:text-primary transition-colors">Push to Cloud</button>
+</div>
+<button class="text-[10px] font-headline uppercase tracking-widest text-signal-red hover:underline">Delete from Server</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Floating Technical Info (Laboratory Feel) -->
+<div class="fixed bottom-6 right-6 pointer-events-none">
+<div class="bg-surface-container-lowest/80 backdrop-blur-xl p-3 border-l border-signal-red/50">
+<p class="font-mono text-[9px] text-signal-red leading-tight">SYSTEM_STATUS: IDLE<br/>UPTIME: 14:02:44<br/>BUF_SIZE: 512_SAMP</p>
+</div>
+</div>
+</body></html>
