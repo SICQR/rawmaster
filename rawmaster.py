@@ -20,6 +20,17 @@ import noisereduce as nr
 import pyloudnorm as pyln
 import requests
 
+# --- SSL: make model downloads work on macOS python.org Python ---
+# Without running "Install Certificates.command", downloading the Demucs
+# model fails with an SSL certificate error inside urllib. Point Python's
+# SSL layer at certifi's CA bundle (bundled via requests) so first-run
+# model downloads work out of the box. setdefault respects a user's own value.
+try:
+    import certifi as _certifi
+    os.environ.setdefault("SSL_CERT_FILE", _certifi.where())
+except Exception:
+    pass
+
 __version__ = "1.0.0"
 
 BANNER = r"""

@@ -12,6 +12,14 @@ import time
 import zipfile
 from pathlib import Path
 
+# --- SSL: make model downloads work on macOS python.org Python ---
+# (see rawmaster.py for details). Set before importing rawmaster / launching demucs.
+try:
+    import certifi as _certifi
+    os.environ.setdefault("SSL_CERT_FILE", _certifi.where())
+except Exception:
+    pass
+
 import gradio as gr
 
 # Import pipeline functions from rawmaster.py (same dir)
@@ -276,34 +284,44 @@ def process(audio_input, reference_input, do_stems, n_stems, quality_setting, do
                 proc = sp.Popen(demucs_cmd, stdout=sp.PIPE, stderr=stderr_file)
 
                 last_pct = 0
-                while proc.poll() is None:
-                    time.sleep(4)
-                    elapsed = _elapsed(t_step)
-                    try:
-                        stderr_file.flush()
-                        raw = open(stderr_path).read()
-                        pct_matches = re.findall(r'(\d+)%\|', raw)
-                        if pct_matches:
-                            last_pct = int(pct_matches[-1])
-                    except Exception:
-                        pass
+                try:
+                    while proc.poll() is None:
+                        time.sleep(4)
+                        elapsed = _elapsed(t_step)
+                        try:
+                            stderr_file.flush()
+                            raw = open(stderr_path).read()
+                            pct_matches = re.findall(r'(\d+)%\|', raw)
+                            if pct_matches:
+                                last_pct = int(pct_matches[-1])
+                        except Exception:
+                            pass
 
-                    # Scale progress: model 1 = 0-45%, model 2 = 45-90%, post = 90-100%
-                    if use_ensemble:
-                        base_pct = model_idx * 45
-                        scaled_pct = base_pct + int(last_pct * 0.45)
-                    else:
-                        scaled_pct = int(last_pct * 0.9)
+                        # Scale progress: model 1 = 0-45%, model 2 = 45-90%, post = 90-100%
+                        if use_ensemble:
+                            base_pct = model_idx * 45
+                            scaled_pct = base_pct + int(last_pct * 0.45)
+                        else:
+                            scaled_pct = int(last_pct * 0.9)
 
-                    status[-1] = f"[{step}/{total_steps}] {model_label} — {elapsed} elapsed"
-                    yield _yld(status, progress=scaled_pct, stem_list=stem_status,
-                               remaster=remaster_path, info=info_str)
-
-                stderr_file.close()
+                        status[-1] = f"[{step}/{total_steps}] {model_label} — {elapsed} elapsed"
+                        yield _yld(status, progress=scaled_pct, stem_list=stem_status,
+                                   remaster=remaster_path, info=info_str)
+                except GeneratorExit:
+                    proc.kill()
+                    proc.wait()
+                    raise
+                finally:
+                    stderr_file.close()
 
                 if proc.returncode != 0:
                     raw = open(stderr_path).read()
-                    raise RuntimeError(f"Demucs {model_name} failed: {raw[:200]}")
+                    hint = ""
+                    if "urllib" in raw or "ssl" in raw.lower() or "certificate" in raw.lower() or "urlopen" in raw:
+                        hint = "\n\n⚠️  This looks like a network/SSL error during model download. On Mac: open Finder → Applications → Python 3.x → run 'Install Certificates.command', then try again."
+                    elif "No module named" in raw:
+                        hint = "\n\n⚠️  Missing module — make sure your virtual environment is active."
+                    raise RuntimeError(f"Demucs {model_name} failed: {raw[:300]}{hint}")
 
                 # Collect stem paths for this model
                 track_name = audio_path.stem
