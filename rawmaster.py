@@ -31,6 +31,84 @@ try:
 except Exception:
     pass
 
+# --- Audio I/O: make Demucs work without torchcodec / system FFmpeg ---
+# torchaudio >= 2.9 delegates load/save to the optional 'torchcodec' package,
+# which most customers don't have (and which itself needs FFmpeg libraries).
+# Layer 1: if ffmpeg/ffprobe binaries are missing, expose static-ffmpeg's
+#          bundled binaries on PATH (Demucs prefers its own ffmpeg reader).
+# Layer 2: inject a sitecustomize shim (via PYTHONPATH) into subprocesses that
+#          patches torchaudio.load/save to use soundfile when torchcodec is
+#          unavailable, so Demucs can still read input and write stem WAVs.
+_TA_SHIM_SRC = """
+# RAWMASTER shim: torchaudio load/save via soundfile when torchcodec is absent.
+try:
+    import importlib.util
+    if (importlib.util.find_spec('torchcodec') is None
+            and importlib.util.find_spec('torchaudio') is not None):
+        import numpy as _np
+        import soundfile as _sf
+        import torch as _torch
+        import torchaudio as _ta
+
+        def _rm_load(uri, frame_offset=0, num_frames=-1, normalize=True,
+                     channels_first=True, format=None, buffer_size=4096, backend=None):
+            data, sr = _sf.read(str(uri), dtype='float32', always_2d=True)
+            if frame_offset:
+                data = data[frame_offset:]
+            if num_frames is not None and num_frames > -1:
+                data = data[:num_frames]
+            t = _torch.from_numpy(data.T.copy() if channels_first else data)
+            return t, sr
+
+        def _rm_save(uri, src, sample_rate, channels_first=True, format=None,
+                     encoding=None, bits_per_sample=None, buffer_size=4096,
+                     backend=None, compression=None):
+            a = src.detach().cpu().numpy() if hasattr(src, 'detach') else _np.asarray(src)
+            if channels_first:
+                a = a.T
+            enc = str(encoding or '').upper().replace('PCM_', '')
+            if 'F' in enc or bits_per_sample == 32:
+                subtype = 'FLOAT'
+            elif bits_per_sample == 24:
+                subtype = 'PCM_24'
+            else:
+                subtype = 'PCM_16'
+            _sf.write(str(uri), a, sample_rate, subtype=subtype)
+
+        _ta.load = _rm_load
+        _ta.save = _rm_save
+except Exception:
+    pass
+"""
+
+
+def _ensure_audio_io():
+    import shutil as _sh
+    # Layer 1: ffmpeg/ffprobe binaries
+    try:
+        if _sh.which("ffmpeg") is None or _sh.which("ffprobe") is None:
+            from static_ffmpeg import run as _sfr
+            _ff, _fp = _sfr.get_or_fetch_platform_executables_else_raise()
+            os.environ["PATH"] = os.path.dirname(_ff) + os.pathsep + os.environ.get("PATH", "")
+    except Exception:
+        pass
+    # Layer 2: torchaudio-without-torchcodec shim for subprocesses
+    try:
+        import importlib.util as _ilu
+        if _ilu.find_spec("torchcodec") is None:
+            _shim_dir = os.path.join(tempfile.gettempdir(), "rawmaster_ta_shim")
+            os.makedirs(_shim_dir, exist_ok=True)
+            with open(os.path.join(_shim_dir, "sitecustomize.py"), "w") as _f:
+                _f.write(_TA_SHIM_SRC)
+            _pp = os.environ.get("PYTHONPATH", "")
+            if _shim_dir not in _pp.split(os.pathsep):
+                os.environ["PYTHONPATH"] = _shim_dir + ((os.pathsep + _pp) if _pp else "")
+    except Exception:
+        pass
+
+
+_ensure_audio_io()
+
 __version__ = "1.0.0"
 
 BANNER = r"""
